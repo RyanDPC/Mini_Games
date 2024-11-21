@@ -1,0 +1,69 @@
+#game-container {
+  width: 100%;
+  max-width: 800px;
+  background-color: #3a4a5e;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.player-area, .dealer-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  background-color: #2a3b50;
+  border-radius: 10px;
+}
+
+.hand {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.cards {
+  width: 80px;
+  height: 120px;
+  background-size: cover;
+  background-repeat: no-repeat;
+  border-radius: 5px;
+  animation: slideIn 0.5s ease forwards;
+}
+
+.feedback {
+  margin: 20px 0;
+  padding: 10px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #2a3b50;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.feedback.win {
+  background-color: #28a745;
+}
+
+.feedback.lose {
+  background-color: #dc3545;
+}
+
+.feedback.tie {
+  background-color: #ffc107;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

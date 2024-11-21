@@ -1,0 +1,23 @@
+
+        h1 {
+            font-size: 3rem;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        #gameCanvas {
+            background-color: #e1d5c9;
+            border: 10px solid #a38671;
+            border-radius: 15px;
+            box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .score-board {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #a38671;
+            color: white;
+            border-radius: 10px;
+            font-size: 1.5rem;
+        }
