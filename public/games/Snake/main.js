@@ -1,9 +1,9 @@
 import { initSnake, moveSnake, drawSnake } from "./snake.js";
-import { generateFood, CheckFood, drawFood } from "./food.js";
+import { generateFood, drawFood } from "./food.js";
 import { handleDirectionChange } from "./controls.js";
 import { checkCollision, checkWallCollision } from "./collision.js";
 import { drawScore } from "./score.js";
-import {drawMenu, drawGameOverMenu, drawStartMenu} from "./menu.js";
+import { drawGameOverMenu} from "./menu.js";
 
 // Sélectionne le canvas de la page HTML et obtient le contexte 2D pour dessiner
 const canvas = document.getElementById("gameCanvas");
@@ -18,7 +18,6 @@ let animationFrameId; // Identifiant pour l'animation
 let lastTime = 0; // Temps de la dernière mise à jour
 let direction = "RIGHT"; // Direction initiale du serpent
 let score = 0; // Score initial
-let isMenuActive = true;
 let isRunning = false;
 
 
@@ -26,7 +25,6 @@ let isRunning = false;
 * Démarre le jeu après le menu.
 */
 export function startGameAfterMenu() {
-  isMenuActive = false; // Désactive le menu
   isRunning = true; // Active le jeu
 
   // Annule toute animation en cours
@@ -69,7 +67,7 @@ function setupGameOverRestart() {
  */
 function startGame() {
   snake = initSnake(); // Initialise le serpent avec sa position de départ
-  food = generateFood(snake, box, canvas); // Génère la nourriture à une position aléatoire
+  food = generateFood(box, canvas); // Génère la nourriture à une position aléatoire
   score = 0; // Réinitialise le score
   direction = "RIGHT"; // Réinitialise la direction initiale
 
@@ -110,12 +108,13 @@ function update(currentTime) {
   // Récupère la tête actuelle du serpent
   let head = snake[0];
 
-  // Vérifie si le serpent a mangé la nourriture et met à jour les variables en conséquence
-  let result = CheckFood(snake, food, box, canvas, score, gameSpeed);
-  food = result.food; // Position mise à jour de la nourriture
-  score = result.score; // Score mis à jour
-  gameSpeed = result.gameSpeed; // Vitesse mise à jour du jeu
-
+  // Vérifie si le serpent mange la nourriture
+  if (checkFoodCollision(snake[0], food)) {
+    score++; // Augmente le score
+    food = generateFood(snake, box, canvas); // Génère une nouvelle nourriture
+  } else {
+    snake.pop(); // Retire le dernier segment si pas de nourriture mangée
+  }
   // Vérifie les collisions : avec les murs ou le corps du serpent
   if (checkCollision(head, snake) || checkWallCollision(head, canvas)) {
     console.log("GAME OVER !"); // Affiche un message de fin de jeu dans la console
@@ -146,4 +145,3 @@ function draw() {
   // Dessine le score actuel
   drawScore(ctx, score);
 }
-drawStartMenu(canvas, ctx, startGameAfterMenu);

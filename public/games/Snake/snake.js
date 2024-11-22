@@ -29,7 +29,7 @@ function initSnake() {
  * @param {HTMLCanvasElement} canvas - Élément canvas représentant la surface de jeu.
  * @returns {{snake: Array<{x: number, y: number}>, food: {x: number, y: number}, score: number}} - Un objet contenant les nouvelles coordonnées du serpent, la nourriture et le score.
  */
-function moveSnake(snake, direction, box, food, score, canvas) {
+function moveSnake(snake, direction, box) {
   
   const newHead = { x: snake[0].x, y: snake[0].y };
 
@@ -49,12 +49,7 @@ function moveSnake(snake, direction, box, food, score, canvas) {
     }
     snake.unshift(newHead);
 
-    if(newHead.x === food.x && newHead.y === food.y){
-     generateFood(snake, box, canvas);
-    } else{
-      snake.pop();
-    }
-    return{newHead, food, score};
+    return{newHead};
 }
 
 /**
