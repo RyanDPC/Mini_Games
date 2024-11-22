@@ -10,7 +10,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 // Définir le port du serveur
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 4000;
 
 // Middleware pour servir les fichiers statiques (HTML, CSS, JS, images)
 app.use(express.static(path.join(__dirname, '../public')));
