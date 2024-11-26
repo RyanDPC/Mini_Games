@@ -1,4 +1,4 @@
-const db = require("../../config/database");
+const db = require("../../config/db");
 
 function createUser(username, password, callback) {
     db.run(`INSERT INTO users (username, password) VALUES (?, ?)`, [username, password], function (err) {

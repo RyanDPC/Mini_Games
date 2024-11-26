@@ -13,7 +13,7 @@
             <input type="text" id="search-input" placeholder="Rechercher un jeu..." autocomplete="off">
             <button id="search-btn"><i class="fas fa-search"></i></button>
         </div>
-        <div class="user-icon">
+        <div class="user-icon" id="user-section">
             <button id="login-btn">
                 <i class="fas fa-user-circle"></i>
             </button>
@@ -31,37 +31,8 @@
     <div class="popup" id="popup-container">
         <!-- Le contenu des fenêtres de login/signup sera chargé ici -->
     </div>
-    
+    <script src="js/auth.js"></script>
+    <script src="js/games.js"></script>
     <script src="js/menu.js"></script>
-    <script>
-        const loginBtn = document.getElementById('login-btn');
-        const popupContainer = document.getElementById('popup-container');
-        const overlay = document.getElementById('overlay');
-
-        // Fonction pour charger dynamiquement un fichier HTML
-        const loadPopupContent = async (file) => {
-            const response = await fetch(file);
-            const content = await response.text();
-            popupContainer.innerHTML = content;
-            popupContainer.style.display = 'block';
-            overlay.style.display = 'block';
-
-            // Ajouter la gestion de fermeture dans le popup chargé
-            document.getElementById('close-popup').addEventListener('click', closePopup);
-        };
-
-        const closePopup = () => {
-            popupContainer.style.display = 'none';
-            overlay.style.display = 'none';
-        };
-
-        // Écouteur pour afficher la popup de login
-        loginBtn.addEventListener('click', () => {
-            loadPopupContent('login.html');
-        });
-
-        // Fermeture via l'overlay
-        overlay.addEventListener('click', closePopup);
-    </script>
 </body>
 </html>

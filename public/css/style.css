@@ -8,7 +8,7 @@ body {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    box-sizing: border-box; /* Inclut le padding dans les dimensions */
+    box-sizing: border-box;
 }
 
 a {
@@ -23,7 +23,7 @@ button {
 
 /* Header Styles */
 header {
-    background: rgba(43, 43, 43, 0.9); /* Fond semi-transparent */
+    background: rgba(43, 43, 43, 0.9);
     padding: 15px 20px;
     display: flex;
     justify-content: space-between;
@@ -40,7 +40,7 @@ header {
 }
 
 .search-bar input {
-    width: 250px;
+    width: 300px;
     padding: 10px;
     border: none;
     background: transparent;
@@ -83,6 +83,39 @@ header {
     transform: rotate(360deg);
 }
 
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #ffffff;
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #007bff;
+}
+
+.user-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+#logout-btn {
+    background: none;
+    border: none;
+    color: #ff4d4d;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+#logout-btn:hover {
+    color: #ff1a1a;
+}
+
 /* Main Styles */
 main {
     flex: 1;
@@ -94,16 +127,17 @@ main {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
-    justify-content: flex-start; /* Aligner les cartes à gauche */
+    justify-content: center;
 }
 
 /* Game Card Styles */
 .game-card {
     position: relative;
     background: rgba(51, 51, 51, 0.9);
-    backdrop-filter: blur(10px); /* Effet flou */
+    backdrop-filter: blur(10px);
     padding: 20px;
-    width: 250px;
+    width: 300px;
+    height: 400px;
     border-radius: 15px;
     text-align: center;
     box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
@@ -114,15 +148,16 @@ main {
 .game-card:hover {
     transform: translateY(-10px);
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-    background: rgba(51, 51, 51, 1); /* Rendre le fond légèrement plus opaque */
+    background: rgba(51, 51, 51, 1);
 }
 
 .game-card img {
     width: 100%;
-    height: auto;
+    height: 200px;
     border-radius: 10px;
     margin-bottom: 15px;
     transition: transform 0.3s ease;
+    object-fit: cover;
 }
 
 .game-card img:hover {
@@ -131,7 +166,7 @@ main {
 
 .game-card h3 {
     margin-top: 10px;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     color: #ffffff;
     font-weight: bold;
     letter-spacing: 1px;
@@ -144,9 +179,9 @@ main {
     right: 15px;
     width: 0;
     height: 0;
-    border-top: 10px solid transparent;
-    border-bottom: 10px solid transparent;
-    border-left: 15px solid #ffcc00;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-left: 20px solid #ffcc00;
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -180,12 +215,12 @@ main {
     left: 50%;
     transform: translate(-50%, -50%);
     background: rgba(43, 43, 43, 0.95);
-    padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
     z-index: 1000;
-    width: 350px;
-    max-width: 90%; /* Pour les petits écrans */
+    width: 400px;
+    max-width: 90%;
     overflow: hidden;
     animation: fadeIn 0.3s ease-in-out;
 }
@@ -196,20 +231,20 @@ main {
 
 .popup-title {
     color: #ffffff;
-    margin-bottom: 20px;
-    font-size: 1.8rem;
+    margin-bottom: 25px;
+    font-size: 2rem;
     letter-spacing: 1px;
     font-weight: bold;
 }
 
 .form-group {
     position: relative;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
 }
 
 .form-group input {
-    width: 100%;
-    padding: 12px 15px 12px 45px;
+    width: 75%;
+    padding: 15px 20px 15px 50px;
     border: none;
     border-radius: 30px;
     background: #444;
@@ -226,14 +261,14 @@ main {
 .form-group i {
     position: absolute;
     top: 50%;
-    left: 15px;
+    left: 20px;
     transform: translateY(-50%);
     color: #007bff;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
 }
 
-.btn-login, .btn-register {
-    width: 100%;
+.btn-login {
+    width: 48%;
     padding: 12px;
     border: none;
     border-radius: 30px;
@@ -243,10 +278,9 @@ main {
     color: #ffffff;
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-.btn-login {
     background: #007bff;
+    float: right;
+    margin-left: 4%;
 }
 
 .btn-login:hover {
@@ -254,24 +288,96 @@ main {
     transform: scale(1.05);
 }
 
-.btn-register {
+.btn-signup {
+    width: 48%;
+    padding: 12px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
     background: #28a745;
+    float: right;
+    margin-left: 4%;
 }
 
-.btn-register:hover {
+.btn-signup:hover {
     background: #218838;
     transform: scale(1.05);
 }
 
+.login {
+    width: 48%;
+    padding: 12px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    background: #6c757d;
+    float: left;
+    margin-right: 4%;
+}
+
+.signup {
+    width: 48%;
+    padding: 12px;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #ffffff;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    background: #6c757d;
+    float: left;
+    margin-left: 0;
+}
+
 .popup-links {
-    margin-top: 15px;
+    margin-top: 10px;
+    font-size: 1rem;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.popup-links button {
+    width: 48%;
+    background: #007bff;
+    color: #ffffff;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 30px;
     font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.popup-links button:first-of-type {
+    background: #28a745;
+}
+
+.popup-links button:hover {
+    background: #0056b3;
 }
 
 .popup-links a {
     color: #007bff;
     text-decoration: none;
     transition: color 0.3s;
+    display: block;
+    margin-bottom: 15px;
+    width: 100%;
+    text-align: left;
 }
 
 .popup-links a:hover {
@@ -289,4 +395,21 @@ main {
         opacity: 1;
         transform: translate(-50%, -50%);
     }
+}
+
+/* Popup Close Button */
+#close-popup {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+#close-popup:hover {
+    color: #ff4d4d;
 }

@@ -1,4 +1,4 @@
-<div class="popup-content">
+<div id="popup-content">
     <button id="close-popup" class="close-btn"><i class="fas fa-times"></i></button>
     <h2 class="popup-title">Sign Up</h2>
     <form>
@@ -19,18 +19,28 @@
             <input type="password" placeholder="Confirm Password" id="signup-confirm-password" required>
         </div>
         <button type="submit" class="btn-signup">SIGN UP</button>
-        <div class="popup-links">
-            <a href="#" id="go-to-login">Already a member? Login</a>
-        </div>
+        <button type="button" class="login" id="login">Login</button>
     </form>
 </div>
 
 <script>
-    document.getElementById('go-to-login').addEventListener('click', () => {
-        fetch('login.html')
-            .then(response => response.text())
-            .then(content => {
-                document.getElementById('popup-container').innerHTML = content;
-            });
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('login').addEventListener('click', () => {
+            fetch('login.html')
+                .then(response => {
+                    console.log('Fetching login.html...');
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.text();
+                })
+                .then(content => {
+                    console.log('Fetched content:', content);
+                    document.getElementById('popup-content').innerHTML = content;
+                })
+                .catch(error => {
+                    console.error('There has been a problem with your fetch operation:', error);
+                });
+        });
     });
 </script>

@@ -14,6 +14,7 @@ const port = process.env.PORT || 4000;
 
 // Middleware pour servir les fichiers statiques (HTML, CSS, JS, images)
 app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.json()); 
 
 // Route de base pour servir la page d'accueil
 app.get('/', (req, res) => {
