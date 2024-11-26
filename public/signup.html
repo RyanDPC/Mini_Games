@@ -1,0 +1,36 @@
+<div class="popup-content">
+    <button id="close-popup" class="close-btn"><i class="fas fa-times"></i></button>
+    <h2 class="popup-title">Sign Up</h2>
+    <form>
+        <div class="form-group">
+            <i class="fas fa-user"></i>
+            <input type="text" placeholder="Username" id="signup-username" required>
+        </div>
+        <div class="form-group">
+            <i class="fas fa-envelope"></i>
+            <input type="email" placeholder="Email" id="signup-email" required>
+        </div>
+        <div class="form-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" placeholder="Password" id="signup-password" required>
+        </div>
+        <div class="form-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" placeholder="Confirm Password" id="signup-confirm-password" required>
+        </div>
+        <button type="submit" class="btn-signup">SIGN UP</button>
+        <div class="popup-links">
+            <a href="#" id="go-to-login">Already a member? Login</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('go-to-login').addEventListener('click', () => {
+        fetch('login.html')
+            .then(response => response.text())
+            .then(content => {
+                document.getElementById('popup-container').innerHTML = content;
+            });
+    });
+</script>

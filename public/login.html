@@ -1,0 +1,29 @@
+<div class="popup-content">
+    <button id="close-popup" class="close-btn"><i class="fas fa-times"></i></button>
+    <h2 class="popup-title">Member Login</h2>
+    <form>
+        <div class="form-group">
+            <i class="fas fa-user"></i>
+            <input type="text" placeholder="Username" id="username" required>
+        </div>
+        <div class="form-group">
+            <i class="fas fa-lock"></i>
+            <input type="password" placeholder="Password" id="password" required>
+        </div>
+        <button type="submit" class="btn-login">LOGIN</button>
+        <div class="popup-links">
+            <a href="#" class="forgot-password">Forgot Password? Click Here</a>
+            <a href="#" id="go-to-signup">Not a member? Sign Up</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('go-to-signup').addEventListener('click', () => {
+        fetch('signup.html')
+            .then(response => response.text())
+            .then(content => {
+                document.getElementById('popup-container').innerHTML = content;
+            });
+    });
+</script>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Games Store</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Rechercher un jeu..." autocomplete="off">
+            <button id="search-btn"><i class="fas fa-search"></i></button>
+        </div>
+        <div class="user-icon">
+            <button id="login-btn">
+                <i class="fas fa-user-circle"></i>
+            </button>
+        </div>
+    </header>
+    
+    <main>
+        <div class="game-list" id="game-list">
+            <!-- Les cartes de jeux seront générées ici par JavaScript -->
+        </div>
+    </main>
+
+    <!-- Conteneur pour le contenu des fenêtres popup -->
+    <div class="overlay" id="overlay"></div>
+    <div class="popup" id="popup-container">
+        <!-- Le contenu des fenêtres de login/signup sera chargé ici -->
+    </div>
+    
+    <script src="js/menu.js"></script>
+    <script>
+        const loginBtn = document.getElementById('login-btn');
+        const popupContainer = document.getElementById('popup-container');
+        const overlay = document.getElementById('overlay');
+
+        // Fonction pour charger dynamiquement un fichier HTML
+        const loadPopupContent = async (file) => {
+            const response = await fetch(file);
+            const content = await response.text();
+            popupContainer.innerHTML = content;
+            popupContainer.style.display = 'block';
+            overlay.style.display = 'block';
+
+            // Ajouter la gestion de fermeture dans le popup chargé
+            document.getElementById('close-popup').addEventListener('click', closePopup);
+        };
+
+        const closePopup = () => {
+            popupContainer.style.display = 'none';
+            overlay.style.display = 'none';
+        };
+
+        // Écouteur pour afficher la popup de login
+        loginBtn.addEventListener('click', () => {
+            loadPopupContent('login.html');
+        });
+
+        // Fermeture via l'overlay
+        overlay.addEventListener('click', closePopup);
+    </script>
+</body>
+</html>

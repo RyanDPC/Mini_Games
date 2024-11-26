@@ -17,7 +17,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // Route de base pour servir la page d'accueil
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/menu.html'));
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Inclure les routes des jeux
