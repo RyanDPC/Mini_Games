@@ -230,6 +230,7 @@ main {
 }
 
 .popup-title {
+    text-align: center;
     color: #ffffff;
     margin-bottom: 25px;
     font-size: 2rem;

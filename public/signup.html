@@ -36,7 +36,7 @@
                 })
                 .then(content => {
                     console.log('Fetched content:', content);
-                    document.getElementById('popup-content').innerHTML = content;
+                    document.getElementById('popup-container').innerHTML = content;
                 })
                 .catch(error => {
                     console.error('There has been a problem with your fetch operation:', error);

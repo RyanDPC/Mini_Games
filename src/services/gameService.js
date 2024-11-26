@@ -1,30 +1,48 @@
+// gameService.js
+
 const fs = require('fs');
 const path = require('path');
 
-const gamesDirectory = path.join(__dirname, '../../public/games');
+// Chemin vers le dossier des jeux
+const gamesPath = path.join(__dirname, '../../public/games');
 
-function getGames() {
-    const gameFolders = fs.readdirSync(gamesDirectory);
-    const games = [];
-
-    gameFolders.forEach(folder => {
-        const folderPath = path.join(gamesDirectory, folder);
-        if (fs.lstatSync(folderPath).isDirectory()) {
-            const htmlPath = path.join(folderPath, 'index.html');
-            const imagePath = path.join(folderPath, `${folder}.png`);
-
-            // Vérifier si le HTML existe pour que le jeu soit listé
-            if (fs.existsSync(htmlPath) && fs.existsSync(imagePath)) {
-                games.push({
-                    name: folder,
-                    image: `/games/${folder}/${folder}.png`,
-                    path: `/games/${folder}/index.html`
-                });
+// Fonction pour récupérer tous les jeux disponibles
+function getAllGames() {
+    return new Promise((resolve, reject) => {
+        fs.readdir(gamesPath, (err, files) => {
+            if (err) {
+                return reject(new Error('Erreur lors de la lecture du dossier des jeux'));
             }
-        }
-    });
 
-    return games;
+            const games = [];
+
+            // Parcourir chaque sous-dossier dans le dossier des jeux
+            files.forEach((file) => {
+                const gameDir = path.join(gamesPath, file);
+
+                // Vérifier si c'est un dossier
+                if (fs.lstatSync(gameDir).isDirectory()) {
+                    const indexPath = path.join(gameDir, 'index.html');
+
+                    // Chercher un fichier PNG avec le même nom que le dossier
+                    const pngFile = fs.readdirSync(gameDir).find(f => f.toLowerCase().endsWith('.png'));
+
+                    // Vérifier si index.html et un fichier PNG existent
+                    if (fs.existsSync(indexPath) && pngFile) {
+                        games.push({
+                            name: file,
+                            indexUrl: `/games/${file}/index.html`,
+                            imageUrl: `/games/${file}/${pngFile}`,
+                        });
+                    }
+                }
+            });
+
+            resolve(games);
+        });
+    });
 }
 
-module.exports = { getGames };
+module.exports = {
+    getAllGames,
+};

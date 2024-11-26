@@ -1,10 +1,10 @@
+// Importer les modules nécessaires
 const express = require('express');
-const router = express.Router();
-const { getGames } = require('../services/gameService');
+const { getGames } = require('../controllers/gameController');
 
-router.get('/games', (req, res) => {
-    const games = getGames();
-    res.json(games);
-});
+const router = express.Router();
+
+// Route pour récupérer tous les jeux disponibles
+router.get('/games', getGames);
 
 module.exports = router;

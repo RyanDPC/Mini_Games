@@ -1,9 +1,16 @@
+// Importer le service de jeux
+const { getAllGames } = require('../services/gameService');
 
-exports.startGame = (req, res) => {
-  res.send('Nouvelle partie de Tic Tac Toe démarrée');
-};
+// Fonction pour obtenir tous les jeux disponibles
+async function getGames(req, res) {
+    try {
+        const games = await getAllGames(); // Appeler la fonction du service pour récupérer les jeux
+        res.status(200).json(games); // Envoyer la liste des jeux en réponse
+    } catch (error) {
+        res.status(500).json({ error: error.message }); // Gérer les erreurs et envoyer un statut 500
+    }
+}
 
-exports.makeMove = (req, res) => {
-  const { player, position } = req.body;
-  res.send(`Le joueur ${player} a joué à la position ${position}`);
+module.exports = {
+    getGames,
 };
