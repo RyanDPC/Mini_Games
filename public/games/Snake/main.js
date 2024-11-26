@@ -61,6 +61,9 @@ function startGame() {
   // Démarre la boucle de mise à jour
   update();
 }
+function restartGame() {
+  startGame(); // Redémarre le jeu en appelant la fonction startGame
+}
 // Fonction pour mettre le jeu en pause ou reprendre
 function togglePause() {
   if (!isPaused) {
@@ -111,13 +114,10 @@ function update(currentTime) {
   }
   // Vérifie les collisions : avec les murs ou le corps du serpent
   if (checkCollision(head, snake) || checkWallCollision(head, canvas)) {
-    console.log("GAME OVER !"); // Affiche un message de fin de jeu dans la console
     cancelAnimationFrame(animationFrameId); // Arrête l'animation
-    drawGameOverMenu(canvas, ctx, score, setupGameOverRestart);
-    setupGameOverRestart();
+    drawGameOverMenu(canvas, ctx, score, restartGame);
     return;
   }
-
   draw(); // Dessine l'état actuel du jeu
   requestAnimationFrame(update); // Demande la prochaine mise à jour
 }
