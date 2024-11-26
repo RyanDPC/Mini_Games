@@ -12,12 +12,10 @@ import {DrawTile} from "./main.js";
  * @returns {{x: number, y: number}} - Un objet contenant les coordonnées `x` et `y` de la nourriture générée.
  */
 function generateFood(box, canvas) {
-  let food;
-    food = {
+  return {
       x: Math.floor(Math.random() * (canvas.width / box)) * box,
       y: Math.floor(Math.random() * (canvas.height / box)) * box,
     };
-  return food;
 }
 /**
  * Dessine la nourriture sur le canvas à la position spécifiée.

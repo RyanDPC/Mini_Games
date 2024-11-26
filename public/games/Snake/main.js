@@ -1,14 +1,13 @@
 import { initSnake, moveSnake, drawSnake } from "./snake.js";
 import { generateFood, drawFood } from "./food.js";
 import { handleDirectionChange } from "./controls.js";
-import { checkCollision, checkWallCollision } from "./collision.js";
-import { drawScore } from "./score.js";
-import { drawGameOverMenu} from "./menu.js";
+import { checkCollision, checkWallCollision, checkFoodCollision } from "./collision.js";
+import { drawGameOverMenu, drawPauseOverlay} from "./menu.js";
 
 // Sélectionne le canvas de la page HTML et obtient le contexte 2D pour dessiner
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-
+let scoreBoard = document.querySelector('.score-board span');
 // Définit la taille d'une case (20px) et initialise les variables nécessaires au jeu
 const box = 20;
 let gameSpeed = 400; // Vitesse initiale du jeu (en millisecondes)
@@ -18,22 +17,9 @@ let animationFrameId; // Identifiant pour l'animation
 let lastTime = 0; // Temps de la dernière mise à jour
 let direction = "RIGHT"; // Direction initiale du serpent
 let score = 0; // Score initial
-let isRunning = false;
-
-
-/**
-* Démarre le jeu après le menu.
-*/
-export function startGameAfterMenu() {
-  isRunning = true; // Active le jeu
-
-  // Annule toute animation en cours
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId);
-  }
+let isPaused = false; // Indique si le jeu est en pause
 
   startGame(); // Démarre le jeu
-}
 
 /**
  * Dessine un rectangle coloré (case) sur le canvas.
@@ -70,15 +56,29 @@ function startGame() {
   food = generateFood(box, canvas); // Génère la nourriture à une position aléatoire
   score = 0; // Réinitialise le score
   direction = "RIGHT"; // Réinitialise la direction initiale
-
-  // Annule toute animation en cours
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId);
-  }
-
+  scoreBoard.textContent = score;
+  isPaused = false;
   // Démarre la boucle de mise à jour
   update();
 }
+// Fonction pour mettre le jeu en pause ou reprendre
+function togglePause() {
+  if (!isPaused) {
+      isPaused = true;
+      cancelAnimationFrame(animationFrameId); // Arrête l'animation
+      drawPauseOverlay(canvas, ctx); // Affiche l'overlay de pause
+  } else {
+      isPaused = false;
+      update(); // Reprend le jeu
+  }
+}
+document.addEventListener("keydown", (event) => {
+  if (event.code === "Space") {
+      togglePause(); // Active/désactive la pause
+  } else {
+      direction = handleDirectionChange(event, direction);
+  }
+});
 
 /**
  * Met à jour l'état du jeu à chaque cycle.
@@ -86,14 +86,7 @@ function startGame() {
  * @param {number} currentTime - Temps actuel en millisecondes, fourni par `requestAnimationFrame`.
  */
 function update(currentTime) {
-  if (isMenuActive) {
-    return; // Empêche toute autre logique de mise à jour
-  }
-
-  if (!isRunning) {
-    return; // Si le jeu n'est pas actif, ne continue pas
-  }
-
+  if (isPaused) return;
   // Vérifie si le délai entre les mises à jour n'est pas encore écoulé
   if (currentTime - lastTime < gameSpeed) {
     requestAnimationFrame(update); // Continue d'attendre la prochaine mise à jour
@@ -110,8 +103,9 @@ function update(currentTime) {
 
   // Vérifie si le serpent mange la nourriture
   if (checkFoodCollision(snake[0], food)) {
-    score++; // Augmente le score
-    food = generateFood(snake, box, canvas); // Génère une nouvelle nourriture
+    score++; // Incrémente le score
+    scoreBoard.textContent = score; // Met à jour le texte affiché
+    food = generateFood( box, canvas); // Génère une nouvelle nourriture
   } else {
     snake.pop(); // Retire le dernier segment si pas de nourriture mangée
   }
@@ -141,7 +135,4 @@ function draw() {
 
   // Dessine la nourriture
   drawFood(food);
-
-  // Dessine le score actuel
-  drawScore(ctx, score);
 }
