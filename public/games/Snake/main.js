@@ -107,6 +107,8 @@ function update(currentTime) {
   // Vérifie si le serpent mange la nourriture
   if (checkFoodCollision(snake[0], food)) {
     score++; // Incrémente le score
+    if(gameSpeed >= 50)
+    gameSpeed -= 10;
     scoreBoard.textContent = score; // Met à jour le texte affiché
     food = generateFood( box, canvas); // Génère une nouvelle nourriture
   } else {
