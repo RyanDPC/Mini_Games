@@ -24,6 +24,10 @@ app.get('/', (req, res) => {
 const gameRoutes = require('./routes/gameRoutes');
 app.use('/api', gameRoutes);
 
+// Inclure les routes des utilisateurs
+const userRoutes = require('./routes/userRoutes');
+app.use('/api/users', userRoutes);
+
 // Gestion des connexions via WebSocket
 io.on('connection', (socket) => {
   console.log('Nouvel utilisateur connecté');
