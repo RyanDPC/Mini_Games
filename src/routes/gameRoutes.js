@@ -5,6 +5,6 @@ const { getGames } = require('../controllers/gameController');
 const router = express.Router();
 
 // Route pour récupérer tous les jeux disponibles
-router.get('/games', getGames);
+router.get('/', getGames);
 
 module.exports = router;

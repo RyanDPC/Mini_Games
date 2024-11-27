@@ -21,38 +21,43 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Inclure les routes d'authentification
-const authRoutes = require('./routes/authRoutes');
-app.use('/api/auth', authRoutes);
-
 // Inclure les routes des jeux
 const gameRoutes = require('./routes/gameRoutes');
-app.use('/api', gameRoutes);
+app.use('/api/games', gameRoutes);
 
-// Inclure les routes des utilisateurs
-const userRoutes = require('./routes/userRoutes');
-app.use('/api/users', userRoutes);
-
-// Inclure les routes des tokens
-const tokenRoutes = require('./routes/tokenRoutes');
-app.use('/api/tokens', tokenRoutes);
+// Inclure les routes d'authentification (connexion uniquement)
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
 
 // Gestion des connexions via WebSocket
 io.on('connection', (socket) => {
     console.log('Nouvel utilisateur connecté');
 
+    // Écouter les messages des clients
     socket.on('message', (data) => {
         console.log('Message reçu:', data);
     });
 
+    // Détecter la déconnexion des clients
     socket.on('disconnect', () => {
         console.log('Utilisateur déconnecté');
     });
 
-    // Envoyer un événement de "refresh" à tous les clients connectés
+    // Exemple : émettre un événement "refresh" toutes les 5 minutes
     setInterval(() => {
         io.emit('refresh');
     }, 300000); // 5 minutes
+});
+
+// Gestion des erreurs 404 pour les routes non définies
+app.use((req, res, next) => {
+    res.status(404).json({ error: 'Route non trouvée.' });
+});
+
+// Gestion des erreurs globales
+app.use((err, req, res, next) => {
+    console.error('Erreur:', err.message);
+    res.status(500).json({ error: 'Erreur interne du serveur.' });
 });
 
 // Démarrer le serveur

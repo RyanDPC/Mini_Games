@@ -1,15 +1,9 @@
-// Importer les modules nécessaires
 const express = require('express');
-const { register, login } = require('../controllers/authController');
+const { getAllUsers } = require('../controllers/authController'); // Vérifiez cette ligne !
 
-// Créer un routeur Express
 const router = express.Router();
 
-// Route pour l'inscription
-router.post('/register', register);
+// Route problématique
+router.get('/', getAllUsers); // Si getAllUsers est undefined, cette route générera une erreur.
 
-// Route pour la connexion
-router.post('/login', login);
-
-// Exporter le routeur pour l'utiliser dans l'application principale
 module.exports = router;
