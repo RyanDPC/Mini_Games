@@ -36,3 +36,29 @@ exports.getAllUsers = async (req, res) => {
         res.status(500).json({ error: 'Erreur interne du serveur.' });
     }
 };
+
+// Obtenir un utilisateur par son pseudo
+exports.getUserByUsername = async (req, res) => {
+    try {
+        const { username } = req.params;
+
+        if (!username) {
+            return res.status(400).json({ error: 'Le pseudo est requis.' });
+        }
+
+        // Récupérer l'utilisateur via userService
+        const user = await userService.getUserByUsername(username);
+
+        if (!user) {
+            return res.status(404).json({ error: 'Utilisateur introuvable.' });
+        }
+
+        res.status(200).json({
+            username: user.username,
+            tokens: user.tokens,
+        });
+    } catch (error) {
+        console.error('Erreur lors de la récupération de l\'utilisateur :', error.message);
+        res.status(500).json({ error: 'Erreur interne du serveur.' });
+    }
+};

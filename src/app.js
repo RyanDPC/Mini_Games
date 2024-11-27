@@ -25,10 +25,6 @@ app.get('/', (req, res) => {
 const gameRoutes = require('./routes/gameRoutes');
 app.use('/api/games', gameRoutes);
 
-// Inclure les routes d'authentification (connexion uniquement)
-const authRoutes = require('./routes/authRoutes');
-app.use('/api/auth', authRoutes);
-
 // Ajouter les routes utilisateur
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);

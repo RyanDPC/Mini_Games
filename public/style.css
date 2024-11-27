@@ -301,10 +301,7 @@ main {
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.3s ease;
     background: #28a745;
-    float: right;
-    margin-left: 4%;
 }
-
 .btn-signup:hover {
     background: #218838;
     transform: scale(1.05);
@@ -322,9 +319,8 @@ main {
     cursor: pointer;
     transition: background-color 0.3s ease, transform 0.3s ease;
     background: #6c757d;
-    float: left;
-    margin-right: 4%;
 }
+
 
 .signup {
     width: 48%;
@@ -385,6 +381,10 @@ main {
     color: #0056b3;
     text-decoration: underline;
 }
+#logout-btn {
+    width: 100px; /* Exemple */
+    text-align: center;
+}
 
 /* Animations */
 @keyframes fadeIn {
@@ -398,7 +398,6 @@ main {
     }
 }
 
-/* Popup Close Button */
 #close-popup {
     position: absolute;
     top: 10px;
@@ -413,4 +412,10 @@ main {
 
 #close-popup:hover {
     color: #ff4d4d;
+}
+
+#form {
+    display: flex;
+    flex-direction:column;
+    text-align: center;
 }

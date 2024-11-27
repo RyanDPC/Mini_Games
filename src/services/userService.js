@@ -11,6 +11,7 @@ exports.validateUser = async (username, password) => {
     if (user.password !== password) {
         throw new Error('Mot de passe incorrect.');
     }
+    console.log('Valeurs reçues :', { username, password });
 
     return user; // Retourne l'utilisateur s'il est valide
 };
@@ -19,4 +20,11 @@ exports.validateUser = async (username, password) => {
 exports.getAllUsers = async () => {
     const users = await userModel.findAllUsers();
     return users;
+};
+exports.getUserByUsername = async (username) => {
+    const user = await userModel.findUserByUsername(username);
+    if (!user) {
+        throw new Error('Utilisateur introuvable.');
+    }
+    return user;
 };
