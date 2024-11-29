@@ -24,14 +24,13 @@ function initSnake() {
  * @param {Array<{x: number, y: number}>} snake - Le tableau représentant le serpent, où chaque élément est un segment avec des coordonnées `x` et `y`.
  * @param {string} direction - La direction actuelle du mouvement du serpent ("LEFT", "UP", "RIGHT", ou "DOWN").
  * @param {number} box - La taille d'une case de la grille en pixels, utilisée pour déterminer la distance de déplacement du serpent.
- * @param {{x: number, y: number}} food - Objet représentant les coordonnées `x` et `y` de la nourriture.
- * @param {number} score - Le score actuel.
- * @param {HTMLCanvasElement} canvas - Élément canvas représentant la surface de jeu.
- * @returns {{snake: Array<{x: number, y: number}>, food: {x: number, y: number}, score: number}} - Un objet contenant les nouvelles coordonnées du serpent, la nourriture et le score.
+ * @returns {{x: number, y: number}} - Un objet contenant les nouvelles coordonnées du serpent, la nourriture et le score.
  */
 function moveSnake(snake, direction, box) {
+  // GCR
+   const newHead = {...snake[0]};
+
   
-  const newHead = { x: snake[0].x, y: snake[0].y };
 
   switch (direction) {
     case "LEFT":

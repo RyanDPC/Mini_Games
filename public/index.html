@@ -11,10 +11,10 @@
     <header>
         <div class="search-bar">
             <input type="text" id="search-input" placeholder="Rechercher un jeu..." autocomplete="off">
-            <button id="search-btn"><i class="fas fa-search"></i></button>
+            <button id="search-btn"><i class="fas fa-search">...</i></button>
         </div>
         <div class="user-icon" id="user-section">
-            <button id="login-btn">
+            <button id="open-login-btn">
                 <i class="fas fa-user-circle"></i> Login
             </button>
         </div>
@@ -27,12 +27,12 @@
     </main>
 
     <!-- Overlay for popup -->
-    <div class="overlay" id="overlay" style="display: none;"></div>
+    <div class="overlay" id="overlay"></div>
 
     <!-- Popup container -->
-    <div class="popup" id="popup-container" style="display: none;">
+    <div class="popup" id="popup-container">
         <button id="close-popup" class="close-btn">
-            <i class="fas fa-times"></i>
+            <i class="fas fa-times">...</i>
         </button>
         <h2 class="popup-title">Member Login</h2>
         <form id="login-form">
@@ -59,18 +59,18 @@
 <script src="games.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const loginButton = document.getElementById('login-btn');
+    const loginButton = document.getElementById('open-login-btn');
     const overlay = document.getElementById('overlay');
     const popupContainer = document.getElementById('popup-container');
 
-    // Ensure loginButton exists before adding the event listener
+    // Assure-toi que le bouton d'ouverture de la popup existe avant d'ajouter l'écouteur
     if (loginButton) {
         loginButton.addEventListener('click', () => {
-            showPopup('login'); // Shows the login popup
+            showPopup('login'); // Affiche la popup de connexion
         });
     }
 
-    // Close the popup when the close button is clicked
+    // Fermer la popup lorsque le bouton de fermeture est cliqué
     const closePopupButton = document.getElementById('close-popup');
     if (closePopupButton) {
         closePopupButton.addEventListener('click', () => {
@@ -78,43 +78,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Handle login form submission
-    const loginForm = document.getElementById('login-form');
-    if (loginForm) {
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value.trim();
-            
-            if (!username || !password) {
-                alert('Veuillez remplir tous les champs');
-                return;
-            }
+    // Gestion de la soumission du formulaire de connexion
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
 
-            // Perform login request
-            fetch('http://localhost:4000/api/users/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                } else {
-                    alert('Connexion réussie');
-                    closePopup();
-                    displayUserInfo(data.user);
-                }
-            })
-            .catch(error => {
-                console.error('Erreur de connexion:', error);
-                alert('Une erreur est survenue lors de la connexion.');
-            });
-        });
+    // Vérification que les deux champs sont non vides
+    if (!username || !password) {
+        alert("Nom d'utilisateur et mot de passe sont requis.");
+        return;
     }
 
-    // Handle signup form submission
+    const data = {
+        username,
+        password
+    };
+
+    try {
+        const response = await fetch('http://localhost:4000/api/users/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            alert(result.message);  // Afficher un message de connexion réussie
+            window.location.href = `http://localhost:4000/?username=${username}`;  // Rediriger
+        } else {
+            const error = await response.json();
+            alert(error.error);  // Afficher l'erreur retournée par l'API
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert("Une erreur s'est produite lors de la connexion.");
+    }
+});
+
+    // Gestion de la soumission du formulaire d'inscription (non complet pour le moment)
     const signupForm = document.getElementById('signup-form');
     if (signupForm) {
         signupForm.addEventListener('submit', (e) => {
@@ -136,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Perform signup request
-            fetch('http://localhost:4000/api/users/register', {
+            fetch('/api/users/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password })
@@ -159,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+
 // Display the user info after successful login/signup
 function displayUserInfo(user) {
     const userSection = document.getElementById('user-section');
@@ -174,7 +180,7 @@ function displayUserInfo(user) {
     const logoutButton = document.getElementById('logout-btn');
     if (logoutButton) {
         logoutButton.addEventListener('click', () => {
-            fetch('http://localhost:4000/api/users/logout', {
+            fetch('/api/users/logout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
             })

@@ -1,64 +1,105 @@
-const userService = require('../services/userService');
+const bcrypt = require('bcrypt');
+const db = require('../../config/db'); // Connexion à la base de données
 
 // Connexion utilisateur
-exports.login = async (req, res) => {
-    try {
-        const { username, password } = req.body;
+exports.login = (req, res) => {
+    const { username, password } = req.body;
 
-        if (!username || !password) {
-            return res.status(400).json({ error: 'Nom d\'utilisateur et mot de passe requis.' });
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Nom d\'utilisateur et mot de passe requis.' });
+    }
+
+    // Vérifier si l'utilisateur existe
+    const query = `SELECT * FROM users WHERE username = ?`;
+
+    db.get(query, [username, password], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erreur lors de la vérification des informations de connexion.' });
         }
 
-        // Valider l'utilisateur via userService
-        const user = await userService.validateUser(username, password);
+        if (!row) {
+            return res.status(400).json({ error: 'Nom d’utilisateur ou mot de passe incorrect.' });
+        }
 
-        res.status(200).json({
-            message: 'Connexion réussie.',
-            user: {
-                username: user.username,
-                tokens: user.tokens,
-            },
+        // Comparer le mot de passe
+        bcrypt.compare(password, row.password, (err, isMatch) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erreur lors de la vérification du mot de passe.' });
+            }
+
+            if (!isMatch) {
+                return res.status(400).json({ error: 'Nom d’utilisateur ou mot de passe incorrect.' });
+            }
+
+            // Connexion réussie
+            res.status(200).json({
+                message: 'Connexion réussie.',
+                user: { username: row.username, email: row.email, tokens: row.tokens }
+            });
         });
-    } catch (error) {
-        console.error('Erreur lors de la connexion :', error.message);
-        res.status(401).json({ error: error.message });
-    }
+    });
 };
 
-// Obtenir tous les utilisateurs
-exports.getAllUsers = async (req, res) => {
-    try {
-        const users = await userService.getAllUsers();
+// Inscription d'un utilisateur
+exports.register = (req, res) => {
+    const { username, password, email } = req.body;
 
-        res.status(200).json(users);
-    } catch (error) {
-        console.error('Erreur lors de la récupération des utilisateurs :', error.message);
-        res.status(500).json({ error: 'Erreur interne du serveur.' });
+    if (!username || !password || !email) {
+        return res.status(400).json({ error: 'Nom d\'utilisateur, mot de passe et email requis.' });
     }
+
+    // Vérifier si l'utilisateur existe déjà
+    const checkQuery = `SELECT * FROM users WHERE username = ?`;
+
+    db.get(checkQuery, [username], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erreur lors de la vérification de l\'existence de l\'utilisateur.' });
+        }
+
+        if (row) {
+            return res.status(400).json({ error: 'Ce nom d\'utilisateur est déjà pris.' });
+        }
+
+        // Hacher le mot de passe
+        bcrypt.hash(password, 10, (err, hashedPassword) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erreur lors du hachage du mot de passe.' });
+            }
+
+            // Insérer un nouvel utilisateur
+            const insertQuery = `INSERT INTO users (username, password, email, tokens) VALUES (?, ?, ?, ?)`;
+
+            db.run(insertQuery, [username, hashedPassword, email, 100], function (err) {
+                if (err) {
+                    return res.status(500).json({ error: 'Erreur lors de la création de l\'utilisateur.' });
+                }
+
+                res.status(201).json({
+                    message: 'Utilisateur créé avec succès.',
+                    user: { username, email, tokens: 100 }
+                });
+            });
+        });
+    });
 };
 
-// Obtenir un utilisateur par son pseudo
-exports.getUserByUsername = async (req, res) => {
-    try {
-        const { username } = req.params;
+// Récupérer tous les utilisateurs (uniquement si l'utilisateur est Ryan)
+exports.getAllUsers = (req, res) => {
+    const { username, password } = req.query;
 
-        if (!username) {
-            return res.status(400).json({ error: 'Le pseudo est requis.' });
-        }
+    // Vérifier les informations d'identification
+    if (username === 'Ryan' && password === 'mdp') {
+        const query = `SELECT * FROM users`;
 
-        // Récupérer l'utilisateur via userService
-        const user = await userService.getUserByUsername(username);
+        db.all(query, [], (err, rows) => {
+            if (err) {
+                return res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs.' });
+            }
 
-        if (!user) {
-            return res.status(404).json({ error: 'Utilisateur introuvable.' });
-        }
-
-        res.status(200).json({
-            username: user.username,
-            tokens: user.tokens,
+            // Retourner tous les utilisateurs
+            res.status(200).json(rows);
         });
-    } catch (error) {
-        console.error('Erreur lors de la récupération de l\'utilisateur :', error.message);
-        res.status(500).json({ error: 'Erreur interne du serveur.' });
+    } else {
+        return res.status(403).json({ error: 'Accès interdit. Seul Ryan peut voir tous les utilisateurs.' });
     }
 };

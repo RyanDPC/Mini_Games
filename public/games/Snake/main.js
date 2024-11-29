@@ -3,7 +3,7 @@ import { generateFood, drawFood } from "./food.js";
 import { handleDirectionChange } from "./controls.js";
 import { checkCollision, checkWallCollision, checkFoodCollision } from "./collision.js";
 import { drawGameOverMenu, drawPauseOverlay} from "./menu.js";
-
+import { startTimer,updateTimer, drawTimer} from "./timer.js";
 // Sélectionne le canvas de la page HTML et obtient le contexte 2D pour dessiner
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
@@ -39,15 +39,6 @@ document.addEventListener("keydown", (event) => {
   direction = handleDirectionChange(event, direction);
 });
 
-function setupGameOverRestart() {
-  document.addEventListener("keydown", function handleKey(event) {
-    if (event.key === "Enter") {
-      document.removeEventListener("keydown", handleKey); // Supprime l'écouteur après redémarrage
-      startGameAfterMenu(); // Redémarre le jeu
-    }
-  });
-}
-
 /**
  * Initialise les variables et démarre le jeu.
  */
@@ -59,6 +50,7 @@ function startGame() {
   scoreBoard.textContent = score;
   isPaused = false;
   // Démarre la boucle de mise à jour
+  startTimer();
   update();
 }
 function restartGame() {
@@ -120,6 +112,7 @@ function update(currentTime) {
     drawGameOverMenu(canvas, ctx, score, restartGame);
     return;
   }
+  updateTimer();
   draw(); // Dessine l'état actuel du jeu
   requestAnimationFrame(update); // Demande la prochaine mise à jour
 }
@@ -137,4 +130,5 @@ function draw() {
 
   // Dessine la nourriture
   drawFood(food);
+  drawTimer(canvas, ctx);
 }
