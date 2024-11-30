@@ -1,105 +1,78 @@
-const bcrypt = require('bcrypt');
 const db = require('../../config/db'); // Connexion à la base de données
+const bcrypt = require('bcrypt'); // Pour hasher les mots de passe
 
-// Connexion utilisateur
+// Méthode pour l'inscription d'un utilisateur
+exports.register = (req, res) => {
+    const { username, password } = req.body;
+
+    // Vérifier si l'utilisateur existe déjà
+    db.get('SELECT * FROM user WHERE username = ?', [username], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: 'Erreur de base de données' });
+        }
+        if (row) {
+            return res.status(400).json({ error: 'Nom d\'utilisateur déjà pris' });
+        }
+
+        // Hasher le mot de passe
+        const hashedPassword = bcrypt.hashSync(password, 10);
+
+        // Insérer l'utilisateur dans la base de données
+        const sql = 'INSERT INTO user (username, password, profile_picture) VALUES (?, ?, ?)';
+        const profilePicture = '1.png';  // Exemple d'assignation d'un PDP aléatoire
+        db.run(sql, [username, hashedPassword, profilePicture], function(err) {
+            if (err) {
+                return res.status(500).json({ error: 'Erreur lors de l\'inscription' });
+            }
+            res.status(201).json({
+                id: this.lastID,
+                username,
+                profile_picture: profilePicture
+            });
+        });
+    });
+};
+
+// Méthode pour la connexion d'un utilisateur
 exports.login = (req, res) => {
     const { username, password } = req.body;
 
-    if (!username || !password) {
-        return res.status(400).json({ error: 'Nom d\'utilisateur et mot de passe requis.' });
-    }
-
     // Vérifier si l'utilisateur existe
-    const query = `SELECT * FROM users WHERE username = ?`;
-
-    db.get(query, [username, password], (err, row) => {
+    db.get('SELECT * FROM user WHERE username = ?', [username], (err, row) => {
         if (err) {
-            return res.status(500).json({ error: 'Erreur lors de la vérification des informations de connexion.' });
+            return res.status(500).json({ error: 'Erreur de base de données' });
         }
-
         if (!row) {
-            return res.status(400).json({ error: 'Nom d’utilisateur ou mot de passe incorrect.' });
+            return res.status(400).json({ error: 'Nom d\'utilisateur non trouvé' });
         }
 
-        // Comparer le mot de passe
-        bcrypt.compare(password, row.password, (err, isMatch) => {
-            if (err) {
-                return res.status(500).json({ error: 'Erreur lors de la vérification du mot de passe.' });
-            }
+        // Vérifier le mot de passe
+        if (!bcrypt.compareSync(password, row.password)) {
+            return res.status(400).json({ error: 'Mot de passe incorrect' });
+        }
 
-            if (!isMatch) {
-                return res.status(400).json({ error: 'Nom d’utilisateur ou mot de passe incorrect.' });
-            }
-
-            // Connexion réussie
-            res.status(200).json({
-                message: 'Connexion réussie.',
-                user: { username: row.username, email: row.email, tokens: row.tokens }
-            });
+        // Retourner les données de l'utilisateur (sans mot de passe)
+        res.status(200).json({
+            id: row.id,
+            username: row.username,
+            profile_picture: row.profile_picture
         });
     });
 };
 
-// Inscription d'un utilisateur
-exports.register = (req, res) => {
-    const { username, password, email } = req.body;
-
-    if (!username || !password || !email) {
-        return res.status(400).json({ error: 'Nom d\'utilisateur, mot de passe et email requis.' });
-    }
-
-    // Vérifier si l'utilisateur existe déjà
-    const checkQuery = `SELECT * FROM users WHERE username = ?`;
-
-    db.get(checkQuery, [username], (err, row) => {
-        if (err) {
-            return res.status(500).json({ error: 'Erreur lors de la vérification de l\'existence de l\'utilisateur.' });
-        }
-
-        if (row) {
-            return res.status(400).json({ error: 'Ce nom d\'utilisateur est déjà pris.' });
-        }
-
-        // Hacher le mot de passe
-        bcrypt.hash(password, 10, (err, hashedPassword) => {
-            if (err) {
-                return res.status(500).json({ error: 'Erreur lors du hachage du mot de passe.' });
-            }
-
-            // Insérer un nouvel utilisateur
-            const insertQuery = `INSERT INTO users (username, password, email, tokens) VALUES (?, ?, ?, ?)`;
-
-            db.run(insertQuery, [username, hashedPassword, email, 100], function (err) {
-                if (err) {
-                    return res.status(500).json({ error: 'Erreur lors de la création de l\'utilisateur.' });
-                }
-
-                res.status(201).json({
-                    message: 'Utilisateur créé avec succès.',
-                    user: { username, email, tokens: 100 }
-                });
-            });
-        });
-    });
-};
-
-// Récupérer tous les utilisateurs (uniquement si l'utilisateur est Ryan)
+// Méthode pour récupérer tous les utilisateurs (accessible uniquement par Ryan)
 exports.getAllUsers = (req, res) => {
-    const { username, password } = req.query;
+    const authorizedUser = req.user; // Cela dépend de votre mécanisme d'authentification
 
-    // Vérifier les informations d'identification
-    if (username === 'Ryan' && password === 'mdp') {
-        const query = `SELECT * FROM users`;
-
-        db.all(query, [], (err, rows) => {
+    if (authorizedUser && authorizedUser.username === 'Ryan') {
+        // Si l'utilisateur est Ryan, récupérer tous les utilisateurs
+        db.all('SELECT id, username, profile_picture FROM user', [], (err, rows) => {
             if (err) {
-                return res.status(500).json({ error: 'Erreur lors de la récupération des utilisateurs.' });
+                return res.status(500).json({ error: 'Erreur de base de données' });
             }
-
-            // Retourner tous les utilisateurs
             res.status(200).json(rows);
         });
     } else {
-        return res.status(403).json({ error: 'Accès interdit. Seul Ryan peut voir tous les utilisateurs.' });
+        return res.status(403).json({ error: 'Accès non autorisé' });
     }
 };

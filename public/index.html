@@ -1,296 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini Games Store</title>
+    <title>Mini Games</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <header>
-        <div class="search-bar">
-            <input type="text" id="search-input" placeholder="Rechercher un jeu..." autocomplete="off">
-            <button id="search-btn"><i class="fas fa-search">...</i></button>
-        </div>
-        <div class="user-icon" id="user-section">
-            <button id="open-login-btn">
-                <i class="fas fa-user-circle"></i> Login
-            </button>
-        </div>
-    </header>
-    
+    <!-- Barre de navigation -->
+    <nav>
+        <input type="search" id="search" placeholder="Rechercher un jeu...">
+        <button id="open-login-btn">Login</button>
+    </nav>
+
+    <!-- Section des jeux -->
     <main>
         <div class="game-list" id="game-list">
             <!-- Les cartes de jeux seront générées ici par JavaScript -->
         </div>
     </main>
 
-    <!-- Overlay for popup -->
-    <div class="overlay" id="overlay"></div>
-
-    <!-- Popup container -->
-    <div class="popup" id="popup-container">
-        <button id="close-popup" class="close-btn">
-            <i class="fas fa-times">...</i>
-        </button>
-        <h2 class="popup-title">Member Login</h2>
-        <form id="login-form">
-            <div class="form-group">
-                <i class="fas fa-user"></i>
-                <input type="text" placeholder="Username" id="username" required>
+    <!-- Popup de connexion -->
+    <div id="overlay" class="overlay">
+        <div id="popup-container" class="popup-container">
+            <button id="close-popup" class="close-popup">X</button>
+            <div id="login-container">
+                <form id="login-form">
+                    <h2>Se connecter</h2>
+                    <input type="text" id="username" placeholder="Nom d'utilisateur" required>
+                    <input type="password" id="password" placeholder="Mot de passe" required>
+                    <button type="submit">Connexion</button>
+                </form>
+                <button id="signup" class="signup-btn">Créer un compte</button>
             </div>
-            <div class="form-group">
-                <i class="fas fa-lock"></i>
-                <input type="password" placeholder="Password" id="password" required>
-            </div>
-            <div class="popup-links">
-                <a href="#" class="forgot-password">Forgot Password? Click Here</a>
-            </div>
-            <button type="submit" class="btn-login">LOGIN</button>
-            <button type="button" class="signup" id="signup">Sign Up</button>
-        </form>
+        </div>
     </div>
 
-    <!-- Button to trigger the popup -->
-    <button id="login-btn" class="login-trigger">
-        <i class="fas fa-user-circle"></i> Login
-    </button>
-<script src="games.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const loginButton = document.getElementById('open-login-btn');
-    const overlay = document.getElementById('overlay');
-    const popupContainer = document.getElementById('popup-container');
-
-    // Assure-toi que le bouton d'ouverture de la popup existe avant d'ajouter l'écouteur
-    if (loginButton) {
-        loginButton.addEventListener('click', () => {
-            showPopup('login'); // Affiche la popup de connexion
-        });
-    }
-
-    // Fermer la popup lorsque le bouton de fermeture est cliqué
-    const closePopupButton = document.getElementById('close-popup');
-    if (closePopupButton) {
-        closePopupButton.addEventListener('click', () => {
-            closePopup();
-        });
-    }
-
-    // Gestion de la soumission du formulaire de connexion
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-
-    // Vérification que les deux champs sont non vides
-    if (!username || !password) {
-        alert("Nom d'utilisateur et mot de passe sont requis.");
-        return;
-    }
-
-    const data = {
-        username,
-        password
-    };
-
-    try {
-        const response = await fetch('http://localhost:4000/api/users/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            alert(result.message);  // Afficher un message de connexion réussie
-            window.location.href = `http://localhost:4000/?username=${username}`;  // Rediriger
-        } else {
-            const error = await response.json();
-            alert(error.error);  // Afficher l'erreur retournée par l'API
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert("Une erreur s'est produite lors de la connexion.");
-    }
-});
-
-    // Gestion de la soumission du formulaire d'inscription (non complet pour le moment)
-    const signupForm = document.getElementById('signup-form');
-    if (signupForm) {
-        signupForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const username = document.getElementById('signup-username').value.trim();
-            const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value.trim();
-            const confirmPassword = document.getElementById('signup-confirm-password').value.trim();
-
-            if (!username || !email || !password || !confirmPassword) {
-                alert('Tous les champs sont requis.');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                alert('Les mots de passe ne correspondent pas.');
-                return;
-            }
-
-            // Perform signup request
-            fetch('/api/users/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, email, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                } else {
-                    alert('Inscription réussie ! Vous pouvez maintenant vous connecter.');
-                    closePopup();
-                    displayUserInfo(data.user);
-                }
-            })
-            .catch(error => {
-                console.error('Erreur d\'inscription:', error);
-                alert('Une erreur est survenue lors de l\'inscription.');
-            });
-        });
-    }
-});
-
-
-// Display the user info after successful login/signup
-function displayUserInfo(user) {
-    const userSection = document.getElementById('user-section');
-    userSection.innerHTML = `
-        <div class="user-info">
-            <img src="${user.profilePicture || 'https://via.placeholder.com/50'}" alt="${user.username}" class="user-avatar">
-            <span class="user-name">${user.username}</span>
-            <button id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
-        </div>
-    `;
-
-    // Handle logout
-    const logoutButton = document.getElementById('logout-btn');
-    if (logoutButton) {
-        logoutButton.addEventListener('click', () => {
-            fetch('/api/users/logout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(() => {
-                userSection.innerHTML = `
-                    <button id="login-btn">
-                        <i class="fas fa-user-circle"></i> Login
-                    </button>
-                `;
-                document.getElementById('login-btn').addEventListener('click', () => {
-                    showPopup('login');
-                });
-            })
-            .catch(err => {
-                console.error('Erreur lors de la déconnexion:', err);
-                alert('Impossible de se déconnecter pour le moment.');
-            });
-        });
-    }
-}
-
-// Function to show the login or signup popup
-function showPopup(type) {
-    const overlay = document.getElementById('overlay');
-    const popupContainer = document.getElementById('popup-container');
-    const popupTitle = document.querySelector('.popup-title');
-
-    overlay.style.display = 'block';
-    popupContainer.style.display = 'block';
-
-    if (type === 'login') {
-            if (popupTitle) {
-                popupTitle.innerHTML = 'Member Login';
-            }
-            popupContainer.innerHTML = `
-            <div id="popup-header">
-                <h2 id="popupTitle">Member Login</h2>
-                <button id="close-popup" class="close-btn"><i class="fas fa-times"></i></button>
-            </div>
-            <form id="login-form">
-                <div id="form">
-                <div class="form-group">
-                    <i class="fas fa-user"></i>
-                    <input type="text" placeholder="Username" id="username" required>
-                </div>
-                <div class="form-group">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" placeholder="Password" id="password" required>
-                </div>
-                </div>
-                <button type="submit" class="btn-login">LOGIN</button>
-                <button type="button" class="signup" id="signup">Sign Up</button>
-            </form>
-            `;
-
-            // Ajouter l'événement après la création du bouton Sign Up
-            document.getElementById('signup').addEventListener('click', () => {
-                showPopup('signup');
-            });
-        } else if (type === 'signup') {
-            if (popupTitle) {
-                popupTitle.innerHTML = 'Sign Up';
-            }
-            popupContainer.innerHTML = `
-            <div id="popup-header">
-                <h2 id="popupTitle">Sign Up</h2>
-                <button id="close-popup" class="close-btn"><i class="fas fa-times"></i></button>
-            </div>
-            <form id="signup-form">
-                <div id="form">
-                <div class="form-group">
-                    <i class="fas fa-user"></i>
-                    <input type="text" placeholder="Username" id="signup-username" required>
-                </div>
-                <div class="form-group">
-                    <i class="fas fa-envelope"></i>
-                    <input type="email" placeholder="Email" id="signup-email" required>
-                </div>
-                <div class="form-group">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" placeholder="Password" id="signup-password" required>
-                </div>
-                <div class="form-group">
-                    <i class="fas fa-lock"></i>
-                    <input type="password" placeholder="Confirm Password" id="signup-confirm-password" required>
-                </div>
-                </div>
-                <button type="button" class="login" id="login">Login</button>
-                <button type="submit" class="btn-signup">SIGN UP</button>
-            </form>
-            `;
-
-            // Ajouter l'événement après la création du bouton Login
-            document.getElementById('login').addEventListener('click', () => {
-                showPopup('login');
-            });
-        }
-
-        // Ajouter l'événement pour fermer le popup après avoir été créé dynamiquement
-        document.getElementById('close-popup').addEventListener('click', () => {
-            popupContainer.innerHTML = ''; // Ferme le popup en le vidant
-        });
-    }
-// Function to close the popup
-function closePopup() {
-    const overlay = document.getElementById('overlay');
-    const popupContainer = document.getElementById('popup-container');
-    overlay.style.display = 'none';
-    popupContainer.style.display = 'none';
-}
-</script>
+    <!-- Section du profil utilisateur -->
+    <section id="profile-section" class="profile-section" style="display: none;">
+        <img id="profile-pic" src="" alt="Profil" class="profile-pic">
+        <span id="username" class="username"></span>
+    </section>
+    <script src="games.js"></script>
+    <script src="connect.js"></script>
 </body>
 </html>

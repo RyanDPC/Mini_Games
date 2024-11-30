@@ -1,64 +1,69 @@
 // Importer les modules nécessaires
 const express = require('express');
-const http = require('http');
+const https = require('https');
 const socketIo = require('socket.io');
 const path = require('path');
+const fs = require('fs');
+
 // Créer une instance d'Express
 const app = express();
-const server = http.createServer(app);
+
+// Charger les fichiers de certificat SSL
+const options = {
+    key: fs.readFileSync(path.join(__dirname, 'ssl', 'private.key')),
+    cert: fs.readFileSync(path.join(__dirname, 'ssl', 'selfsigned.crt'))
+};
+
+// Créer un serveur HTTPS en utilisant les certificats
+const server = https.createServer(options, app);
 const io = socketIo(server);
+
 const bodyParser = require('body-parser');
-// Définir le port du serveur
 const port = process.env.PORT || 4000;
 
-// Middleware pour servir les fichiers statiques (HTML, CSS, JS, images)
+// Middleware pour servir les fichiers statiques
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
+
 // Route de base pour servir la page d'accueil
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Inclure les routes des jeux
+// Routes des jeux et des utilisateurs
 const gameRoutes = require('./routes/gameRoutes');
 app.use('/api/games', gameRoutes);
 
-// Ajouter les routes utilisateur
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
 
 // Gestion des connexions via WebSocket
 io.on('connect', (socket) => {
     console.log('Nouvel utilisateur connecté');
-
-    // Écouter les messages des clients
     socket.on('message', (data) => {
         console.log('Message reçu:', data);
     });
 
-    // Détecter la déconnexion des clients
     socket.on('disconnect', () => {
         console.log('Utilisateur déconnecté');
     });
 
-    // Exemple : émettre un événement "refresh" toutes les 5 minutes
     setInterval(() => {
         io.emit('refresh');
-    }, 300000); // 5 minutes
+    }, 300000);
 });
 
-// Gestion des erreurs 404 pour les routes non définies
+// Gestion des erreurs 404 et 500
 app.use((req, res) => {
     res.status(404).json({ error: 'Route non trouvée.' });
 });
 
-// Gestion des erreurs globales
 app.use((err, req, res, next) => {
     console.error('Erreur:', err.message);
     res.status(500).json({ error: 'Erreur interne du serveur.' });
 });
 
-// Démarrer le serveur
+// Démarrer le serveur HTTPS
 server.listen(port, () => {
-    console.log(`Serveur démarré sur http://localhost:${port}`);
+    console.log(`Serveur HTTPS démarré sur https://localhost:${port}`);
 });

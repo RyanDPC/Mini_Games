@@ -1,4 +1,4 @@
-import {DrawTile} from "./main.js";
+import {DrawTile} from "./game.js";
 
 /**
  * Génère de manière aléatoire la position de la nourriture sur la grille du jeu.

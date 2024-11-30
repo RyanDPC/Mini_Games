@@ -7,7 +7,7 @@
  * @returns {Array<{x: number, y: number}>} - Un tableau contenant un objet représentant la position du premier segment du serpent.
  */
 import { generateFood } from "./food.js";
-import {DrawTile} from "./main.js";
+import {DrawTile} from "./game.js";
 
 function initSnake() {
   // A compléter
