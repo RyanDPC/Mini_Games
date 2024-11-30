@@ -11,4 +11,5 @@ router.post('/register', userController.register);
 // Route pour récupérer tous les utilisateurs (accessible uniquement par Ryan)
 router.get('/all', userController.getAllUsers);
 
+router.post('/update-tokens', userController.updateTokens);
 module.exports = router;
