@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Variables DOM for the game list and search input
     const gameList = document.getElementById("game-list");
-    const searchInput = document.getElementById("search-input");
+    const searchInput = document.getElementById("search");
 
     // Fetch the games list
     fetchGames();
