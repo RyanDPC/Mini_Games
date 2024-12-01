@@ -1,37 +1,75 @@
 // speciality.js
 
-// Liste des spécialités disponibles
+// Liste des passifs disponibles
 export const specialityLibrary = {
-    explosion: {
-        name: "Explosion",
-        cooldown: 5000, // Temps entre chaque utilisation (en millisecondes)
-        radius: 100, // Rayon de l'explosion
-        damage: 50, // Dégâts infligés aux ennemis dans le rayon
-        duration: 1000 // Durée d'effet (en millisecondes)
+    healthBoost: {
+        name: "Health Boost",
+        description: "Increase max health by 20.",
+        effect: (player) => {
+            player.maxHealth += 20;
+            player.health = player.maxHealth;  // Récupère toute la vie à l'activation du passif
+            console.log(`Health increased! Max health is now: ${player.maxHealth}`);
+        },
+        requiredWave: 3,  // Débloqué à la vague 3
     },
-    laserBeam: {
-        name: "Laser Beam",
-        cooldown: 7000,
-        damage: 20, // Dégâts infligés par seconde
-        width: 5, // Largeur du rayon laser
-        range: 300, // Longueur maximale du rayon
-        duration: 2000 // Durée d'effet (en millisecondes)
+    speedBoost: {
+        name: "Speed Boost",
+        description: "Increase movement speed by 1.5x.",
+        effect: (player) => {
+            player.speed *= 1.5;
+            console.log(`Speed increased! New speed: ${player.speed}`);
+        },
+        requiredWave: 5,  // Débloqué à la vague 5
     },
-    shield: {
-        name: "Shield",
-        cooldown: 10000,
-        duration: 5000, // Temps de protection (en millisecondes)
-        reduction: 50 // Pourcentage de réduction des dégâts subis
+    damageBoost: {
+        name: "Damage Boost",
+        description: "Increase damage output by 25%.",
+        effect: (player) => {
+            player.damageMultiplier = 1.25;
+            console.log(`Damage increased! New damage multiplier: ${player.damageMultiplier}`);
+        },
+        requiredWave: 7,  // Débloqué à la vague 7
     },
-    dash: {
-        name: "Dash",
-        cooldown: 3000,
-        speedMultiplier: 3, // Multiplicateur de vitesse pendant le dash
-        duration: 500 // Durée du dash (en millisecondes)
-    }
+    reloadBoost: {
+        name: "Reload Speed Boost",
+        description: "Reduce reload time by 30%.",
+        effect: (player) => {
+            player.reloadTime *= 0.7;
+            console.log(`Reload speed increased! New reload time: ${player.reloadTime}`);
+        },
+        requiredWave: 10,  // Débloqué à la vague 10
+    },
+    shieldBoost: {
+        name: "Shield Boost",
+        description: "Reduce shield cooldown by 50%.",
+        effect: (player) => {
+            player.shieldCooldown *= 0.5;
+            console.log(`Shield cooldown reduced! New cooldown: ${player.shieldCooldown}`);
+        },
+        requiredWave: 12,  // Débloqué à la vague 12
+    },
 };
 
-// Fonction pour récupérer une spécialité par son nom
-export function getSpeciality(specialityName) {
-    return specialityLibrary[specialityName];
+// Fonction pour activer les passifs en fonction de la vague actuelle
+export function checkSpecialityUnlock(currentWave, player) {
+    // Vérifie les passifs débloqués selon la vague actuelle
+    Object.values(specialityLibrary).forEach(speciality => {
+        if (currentWave >= speciality.requiredWave && !player.specialities.includes(speciality.name)) {
+            speciality.effect(player);  // Applique l'effet du passif
+            player.specialities.push(speciality.name);  // Ajoute le passif à la liste des passifs du joueur
+            console.log(`${speciality.name} unlocked at wave ${currentWave}`);
+        }
+    });
+}
+
+// Fonction pour réinitialiser les passifs lors du redémarrage du jeu
+export function resetSpecialities(player) {
+    player.specialities = [];  // Vide la liste des passifs du joueur
+    player.maxHealth = 100;  // Réinitialise la santé maximale
+    player.health = player.maxHealth;  // Réinitialise la santé du joueur
+    player.speed = 5;  // Réinitialise la vitesse
+    player.damageMultiplier = 1;  // Réinitialise le multiplicateur de dégâts
+    player.reloadTime = 2000;  // Réinitialise le temps de rechargement
+    player.shieldCooldown = 5000;  // Réinitialise le cooldown du bouclier
+    console.log("Specialities and player stats have been reset!");
 }
