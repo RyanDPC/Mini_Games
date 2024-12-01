@@ -4,6 +4,7 @@ const https = require('https');
 const socketIo = require('socket.io');
 const path = require('path');
 const fs = require('fs');
+const cors = require('cors');
 
 // Créer une instance d'Express
 const app = express();
@@ -14,21 +15,19 @@ const options = {
     cert: fs.readFileSync(path.join(__dirname, 'ssl', 'selfsigned.crt'))
 };
 
-// Créer un serveur HTTPS en utilisant les certificats
-const server = https.createServer(options, app);
-const io = socketIo(server);
+// Configuration CORS
+const corsOptions = {
+    origin: ['https://localhost:3000', 'https://localhost:4000'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true
+};
 
-const bodyParser = require('body-parser');
-const port = process.env.PORT || 4000;
+// Activer CORS
+app.use(cors(corsOptions));
 
-// Middleware pour servir les fichiers statiques
+// Middleware pour servir les fichiers statiques et JSON
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.json());
-
-// Route de base pour servir la page d'accueil
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
-});
 
 // Routes des jeux et des utilisateurs
 const gameRoutes = require('./routes/gameRoutes');
@@ -36,22 +35,6 @@ app.use('/api/games', gameRoutes);
 
 const userRoutes = require('./routes/userRoutes');
 app.use('/api/users', userRoutes);
-
-// Gestion des connexions via WebSocket
-io.on('connect', (socket) => {
-    console.log('Nouvel utilisateur connecté');
-    socket.on('message', (data) => {
-        console.log('Message reçu:', data);
-    });
-
-    socket.on('disconnect', () => {
-        console.log('Utilisateur déconnecté');
-    });
-
-    setInterval(() => {
-        io.emit('refresh');
-    }, 300000);
-});
 
 // Gestion des erreurs 404 et 500
 app.use((req, res) => {
@@ -63,7 +46,29 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Erreur interne du serveur.' });
 });
 
-// Démarrer le serveur HTTPS
-server.listen(port, () => {
-    console.log(`Serveur HTTPS démarré sur https://localhost:${port}`);
+// Démarrer un serveur HTTPS et WebSocket pour chaque port
+const ports = [3000, 4000];
+ports.forEach(port => {
+    const serverInstance = https.createServer(options, app);
+    const ioInstance = socketIo(serverInstance);
+
+    // Gestion des connexions WebSocket
+    ioInstance.on('connect', (socket) => {
+        console.log(`Nouvel utilisateur connecté sur le port ${port}`);
+        socket.on('message', (data) => {
+            console.log(`Message reçu sur le port ${port}:`, data);
+        });
+
+        socket.on('disconnect', () => {
+            console.log(`Utilisateur déconnecté du port ${port}`);
+        });
+
+        setInterval(() => {
+            ioInstance.emit('refresh');
+        }, 300000);
+    });
+
+    serverInstance.listen(port, () => {
+        console.log(`Serveur HTTPS en cours d'exécution sur https://localhost:${port}`);
+    });
 });

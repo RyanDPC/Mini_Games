@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const savedUser = localStorage.getItem('user');
     const overlay = document.getElementById('overlay');
     const popupContainer = document.getElementById('popup-container');
     const openLoginButton = document.getElementById('open-login-btn');
@@ -9,22 +10,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginErrorMessage = document.getElementById('login-error');
     const profileSection = document.getElementById('profile-section');
     const profilePic = document.getElementById('profile-pic');
-    const usernameSpan = document.getElementById('username');
+    const usernameSpan = document.getElementById('username-span');
     const logoutButton = document.getElementById('logout-btn');
-    const savedUser = localStorage.getItem('user');
+
     let isLoginMode = true;
+
+    // Vérifier si un utilisateur est connecté
     if (savedUser) {
         const user = JSON.parse(savedUser);
-        // Afficher la section profil et masquer la popup
-        profileSection.style.display = 'block';
+        showUserProfile(user);  // Afficher le profil si l'utilisateur est connecté
+    } else {
+        hideUserProfile();  // Masquer le profil si aucun utilisateur n'est connecté
+    }
+
+    // Fonction pour afficher le profil de l'utilisateur
+    function showUserProfile(user) {
+        // Afficher l'image de profil
+        profilePic.src = `/assets/pdp/${user.profile_pic}`;
+
+        // Afficher le nom de l'utilisateur
         usernameSpan.innerText = user.username;
 
-        // Mettre à jour l'image de profil
-        profilePic.src = `/assets/pdp/${user.profilePic}`;
-
-        // Masquer le bouton de login
+        // Afficher la section de profil et masquer le bouton de connexion
+        profileSection.style.display = 'block';
         openLoginButton.style.display = 'none';
+        logoutButton.style.display = 'block';
     }
+
+    // Fonction pour masquer le profil
+    function hideUserProfile() {
+        profileSection.style.display = 'none';
+        openLoginButton.style.display = 'block';
+        logoutButton.style.display = 'none';
+    }
+
+    // Gestion de la déconnexion
+    logoutButton.addEventListener('click', () => {
+        // Supprimer l'utilisateur du localStorage
+        localStorage.removeItem('user');
+        hideUserProfile();  // Masquer le profil après déconnexion
+    });
+
     // Fonction pour basculer entre l'inscription et la connexion
     toggleFormButton.addEventListener('click', () => {
         isLoginMode = !isLoginMode;
@@ -74,47 +100,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const apiUrl = isLoginMode ? 'https://localhost:4000/api/users/login' : 'https://localhost:4000/api/users/register';
-        const body = isLoginMode ? { username, password } : { username, password, email };
+        const userData = { username, password, email };
 
         try {
             const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
             });
 
             const data = await response.json();
 
-            if (data.username) {
-                // Afficher la section profil et masquer la popup
-                profileSection.style.display = 'block';
-                usernameSpan.innerText = data.username;
-    
-                // Mettre à jour l'image de profil avec une image aléatoire
-                const profilePics = ['1.jpg', '2.jpg', '3.jpg', '4.jpg', '5.jpg'];
-                const randomProfilePic = profilePics[Math.floor(Math.random() * profilePics.length)];
-                profilePic.src = `/assets/pdp/${randomProfilePic}`;
-    
-                // Masquer la popup de connexion
-                openLoginButton.style.display = 'none';
-    
-                // Sauvegarder l'état de l'utilisateur dans localStorage
-                localStorage.setItem('user', JSON.stringify({ username: data.username, profilePic: randomProfilePic }));
+            if (data.token) {
+                // Enregistrer les informations de l'utilisateur dans localStorage
+                localStorage.setItem('user', JSON.stringify(data.user));
+                window.location.href = `/?username=${data.user.username}`;
+                // Fermer la popup et afficher le profil
+                overlay.style.display = 'none';
+                popupContainer.style.display = 'none';
+                showUserProfile(data.user);
             } else {
-                loginErrorMessage.innerText = data.error || "Une erreur est survenue.";
+                loginErrorMessage.innerText = data.message;
                 loginErrorMessage.style.display = 'block';
             }
         } catch (error) {
-            loginErrorMessage.innerText = "Erreur lors de la connexion ou de l'inscription.";
+            loginErrorMessage.innerText = "Erreur serveur, veuillez réessayer.";
             loginErrorMessage.style.display = 'block';
         }
-    });
-
-    // Déconnexion de l'utilisateur
-    logoutButton.addEventListener('click', () => {
-        profileSection.style.display = 'none';
-        openLoginButton.style.display = 'block';
-    // Supprimer l'utilisateur du localStorage
-        localStorage.removeItem('user');
     });
 });
