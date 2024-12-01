@@ -1,134 +1,144 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const savedUser = localStorage.getItem('user');
-    const overlay = document.getElementById('overlay');
-    const popupContainer = document.getElementById('popup-container');
+    // Sélection des éléments DOM nécessaires
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
     const openLoginButton = document.getElementById('open-login-btn');
-    const closePopupButton = document.getElementById('close-popup');
-    const authForm = document.getElementById('auth-form');
-    const toggleFormButton = document.getElementById('toggle-form-btn');
-    const authButton = document.getElementById('auth-btn');
-    const loginErrorMessage = document.getElementById('login-error');
-    const profileSection = document.getElementById('profile-section');
-    const profilePic = document.getElementById('profile-pic');
-    const usernameSpan = document.getElementById('username-span');
+    const loginButton = document.getElementById('login-btn');
+    const loginError = document.getElementById('login-error');
+    const registerError = document.getElementById('register-error');
     const logoutButton = document.getElementById('logout-btn');
+    const profileFriendsSection = document.getElementById('profile-friends-section');
+    const user = JSON.parse(localStorage.getItem('user'));
 
-    let isLoginMode = true;
+    const apiUrl = window.location.origin.includes('localhost')
+        ? 'https://localhost:4000/api/users'
+        : 'https://localhost:3000/api/users';
 
-    // Vérifier si un utilisateur est connecté
-    if (savedUser) {
-        const user = JSON.parse(savedUser);
-        showUserProfile(user);  // Afficher le profil si l'utilisateur est connecté
-    } else {
-        hideUserProfile();  // Masquer le profil si aucun utilisateur n'est connecté
+    console.log("Script chargé. API URL : ", apiUrl);
+
+    // Fonction pour afficher un message d'erreur
+    function showError(message, errorElement) {
+        console.error("Erreur : ", message);
+        errorElement.textContent = message;
+        errorElement.style.display = 'block';
+    }
+    // Vérifie si l'utilisateur est connecté
+    console.log("Utilisateur connecté : ", user);
+
+    if (profileFriendsSection) {
+        if (user) {
+            console.log("Utilisateur détecté, affichage de la section amis.");
+            profileFriendsSection.style.display = 'block';
+
+            const profilePicElement = document.getElementById('profile-pic');
+            const usernameSpan = document.getElementById('username-span');
+            if (profilePicElement && usernameSpan) {
+                profilePicElement.src = user.profile_pic;
+                usernameSpan.textContent = user.username;
+            }
+        } else {
+            console.log("Aucun utilisateur détecté, masquage de la section amis.");
+            profileFriendsSection.style.display = 'none';
+        }
     }
 
-    // Fonction pour afficher le profil de l'utilisateur
-    function showUserProfile(user) {
-        // Afficher l'image de profil
-        profilePic.src = `/assets/pdp/${user.profile_pic}`;
-
-        // Afficher le nom de l'utilisateur
-        usernameSpan.innerText = user.username;
-
-        // Afficher la section de profil et masquer le bouton de connexion
-        profileSection.style.display = 'block';
-        openLoginButton.style.display = 'none';
-        logoutButton.style.display = 'block';
+    // Gestion du bouton pour ouvrir le formulaire de connexion
+    if (openLoginButton) {
+        openLoginButton.addEventListener('click', () => {
+            console.log("Ouverture du formulaire de connexion.");
+            window.location.href = '/login';
+        });
     }
 
-    // Fonction pour masquer le profil
-    function hideUserProfile() {
-        profileSection.style.display = 'none';
-        openLoginButton.style.display = 'block';
-        logoutButton.style.display = 'none';
+    // Gestion du bouton de connexion dans le formulaire
+    if (loginButton) {
+        loginButton.addEventListener('click', async (event) => {
+            event.preventDefault();
+            console.log("Tentative de connexion...");
+
+            if (!loginForm) {
+                console.error("Formulaire de connexion introuvable.");
+                return;
+            }
+
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+
+            if (!username || !password) {
+                showError('Veuillez remplir tous les champs.', loginError);
+                return;
+            }
+
+            try {
+                console.log("Envoi des informations de connexion au serveur...");
+                const response = await fetch(`${apiUrl}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                const data = await response.json();
+                console.log("Réponse du serveur : ", data);
+
+                if (response.ok) {
+                    console.log("Connexion réussie. Stockage de l'utilisateur...");
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = `/?username=${encodeURIComponent(data.user.username)}`;
+                } else {
+                    showError(data.message || 'Erreur de connexion.', loginError);
+                }
+            } catch (error) {
+                console.error("Erreur lors de la connexion : ", error);
+                showError('Une erreur est survenue. Veuillez réessayer.', loginError);
+            }
+        });
+    }
+
+    // Gestion du formulaire d'inscription
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            console.log("Soumission du formulaire d'inscription.");
+
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value.trim();
+
+            if (!username || !password) {
+                showError('Veuillez remplir tous les champs.', registerError);
+                return;
+            }
+
+            try {
+                console.log("Envoi des informations d'inscription au serveur...");
+                const response = await fetch(`${apiUrl}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                const data = await response.json();
+                console.log("Réponse du serveur : ", data);
+
+                if (response.ok) {
+                    console.log("Inscription réussie. Stockage de l'utilisateur...");
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    window.location.href = `/?username=${encodeURIComponent(data.user.username)}`;
+                } else {
+                    showError(data.message || 'Erreur d\'inscription.', registerError);
+                }
+            } catch (error) {
+                console.error("Erreur lors de l'inscription : ", error);
+                showError('Une erreur est survenue. Veuillez réessayer.', registerError);
+            }
+        });
     }
 
     // Gestion de la déconnexion
-    logoutButton.addEventListener('click', () => {
-        // Supprimer l'utilisateur du localStorage
-        localStorage.removeItem('user');
-        hideUserProfile();  // Masquer le profil après déconnexion
-    });
-
-    // Fonction pour basculer entre l'inscription et la connexion
-    toggleFormButton.addEventListener('click', () => {
-        isLoginMode = !isLoginMode;
-        if (isLoginMode) {
-            document.getElementById('form-title').innerText = 'Se connecter';
-            document.getElementById('email-container').style.display = 'none';  // Masquer le champ email
-            authButton.innerText = 'Se connecter';
-            toggleFormButton.innerText = 'Créer un compte';
-        } else {
-            document.getElementById('form-title').innerText = 'S\'inscrire';
-            document.getElementById('email-container').style.display = 'block';  // Afficher le champ email
-            authButton.innerText = 'S\'inscrire';
-            toggleFormButton.innerText = 'Déjà un compte ? Se connecter';
-        }
-    });
-
-    // Ouvrir la popup de connexion lorsque le bouton "Se connecter" est cliqué
-    openLoginButton.addEventListener('click', () => {
-        overlay.style.display = 'block';  // Afficher le fond d'écran gris
-        popupContainer.style.display = 'block';  // Afficher la popup
-    });
-
-    // Fermer la popup lorsque le bouton "Fermer" est cliqué
-    closePopupButton.addEventListener('click', () => {
-        overlay.style.display = 'none';  // Cacher le fond d'écran
-        popupContainer.style.display = 'none';  // Cacher la popup
-    });
-
-    // Fermer la popup si on clique sur le fond (overlay)
-    overlay.addEventListener('click', () => {
-        overlay.style.display = 'none';  // Cacher le fond d'écran
-        popupContainer.style.display = 'none';  // Cacher la popup
-    });
-
-    // Gestion de la soumission du formulaire de connexion ou d'inscription
-    authForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value.trim();
-        const email = document.getElementById('email') ? document.getElementById('email').value.trim() : null;
-
-        // Vérification des champs vides
-        if (!username || !password || (!isLoginMode && !email)) {
-            loginErrorMessage.innerText = "Veuillez remplir tous les champs.";
-            loginErrorMessage.style.display = 'block';
-            return;
-        }
-
-        const apiUrl = isLoginMode ? 'https://localhost:4000/api/users/login' : 'https://localhost:4000/api/users/register';
-        const userData = { username, password, email };
-
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(userData)
-            });
-
-            const data = await response.json();
-
-            if (data.token) {
-                // Enregistrer les informations de l'utilisateur dans localStorage
-                localStorage.setItem('user', JSON.stringify(data.user));
-                window.location.href = `/?username=${data.user.username}`;
-                // Fermer la popup et afficher le profil
-                overlay.style.display = 'none';
-                popupContainer.style.display = 'none';
-                showUserProfile(data.user);
-            } else {
-                loginErrorMessage.innerText = data.message;
-                loginErrorMessage.style.display = 'block';
-            }
-        } catch (error) {
-            loginErrorMessage.innerText = "Erreur serveur, veuillez réessayer.";
-            loginErrorMessage.style.display = 'block';
-        }
-    });
+    if (logoutButton) {
+        logoutButton.addEventListener('click', () => {
+            console.log("Déconnexion en cours...");
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        });
+    }
 });

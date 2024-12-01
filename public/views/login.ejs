@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Se connecter - Mini Games Store</title>
+    <link rel="stylesheet" href="style.css"> <!-- Ajoutez le chemin correct -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="auth-container">
+        <h2>Se connecter</h2>
+        <form id="login-form">
+            <div class="input-container">
+                <label for="login-username">Nom d'utilisateur</label>
+                <input type="text" id="login-username" name="username" required>
+            </div>
+            <div class="input-container">
+                <label for="login-password">Mot de passe</label>
+                <input type="password" id="login-password" name="password" required>
+            </div>
+            <div class="error-message" id="login-error"></div>
+            <button type="submit" id="login-btn">Se connecter</button>
+        </form>
+        <p>Pas encore de compte ? <a href="/register">S'inscrire</a></p> <!-- Route de redirection vers l'inscription -->
+    </div>
+
+    <!-- Scripts -->
+    <script src="/connect.js"></script> <!-- Assurez-vous que le fichier connect.js est dans le bon répertoire -->
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Games Store</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation Header -->
+    <%- include('header') %>
+
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Section des jeux -->
+        <div class="games-section">
+            <h2>Jeux disponibles</h2>
+            <div class="game-list" id="game-list">
+                <!-- Les cartes de jeux seront insérées ici par le JS -->
+            </div>
+        </div>
+
+        <!-- Liste des amis (seulement si connecté) -->
+        <% if (user) { %>
+        <div class="profile-friends-section">
+            <div class="friends-list">
+                <h3>Liste d'Amis</h3>
+                <!-- Recherche d'amis -->
+                <div class="search-friend">
+                    <input type="text" id="friend-search" placeholder="Rechercher un ami...">
+                    <button id="search-friend-btn"><i class="fas fa-search"></i> Rechercher</button>
+                </div>
+
+                <!-- Affichage des résultats de recherche -->
+                <div id="friend-result">
+                    <p id="search-message"></p>
+                    <ul id="search-results"></ul>
+                </div>
+
+                <!-- Liste des amis -->
+                <ul id="friends-ul">
+                    <li>Aucun ami pour le moment</li>
+                </ul>
+            </div>
+        </div>
+        <% } %>
+
+        <!-- Bouton de déconnexion -->
+        <% if (user) { %>
+        <div class="logout-container">
+            <button id="logout-btn">Déconnexion</button>
+        </div>
+        <% } %>
+    </div>
+
+    <!-- Scripts -->
+    <script src="connect.js"></script>
+    <script src="games.js"></script>
+    <script src="friends.js"></script>
+</body>
+</html>
