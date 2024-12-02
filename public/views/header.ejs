@@ -1,3 +1,4 @@
+
 <nav>
     <div class="logo-container">
         <img src="/assets/Logo.png" alt="Mini Games Store Logo" class="logo">
@@ -9,9 +10,10 @@
     <div class="user-info">
         <% if (user) { %>
             <div class="profile-section">
-                <p>Bienvenue, <%= user.username %></p>
-                <img src="<%= user.profile_pic %>" alt="Photo de profil" class="profile-pic">
-                <button id="logout-btn">Déconnexion</button>
+                <div class="info"><p><%= user.username %></p>
+                    <button id="logout-btn">Déconnexion</button></div>
+                <div class="photo"><img src="<%= user.profile_pic %>" alt="Photo de profil" class="profile-pic"></div>
+                
             </div>
         <% } else { %>
             <button id="open-login-btn">Se connecter</button>

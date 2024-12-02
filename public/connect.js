@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } finally {
                 localStorage.removeItem('user');
                 localStorage.removeItem('accessToken');
-                window.location.href = '/login';
+                window.location.reload();
             }
         });
     }

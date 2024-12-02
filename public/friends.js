@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchResults = document.getElementById('search-results');
     const searchMessage = document.getElementById('search-message');
     const friendsUl = document.getElementById('friends-ul');
+    const friendStatusFilter = document.getElementById('friend-status-filter');
 
     const apiUrl = window.location.origin.includes('localhost')
         ? 'https://localhost:4000/api'
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`${apiUrl}/token/refresh`, {
                 method: 'POST',
-                credentials: 'include', // Inclure les cookies (refresh token)
+                credentials: 'include',
             });
             if (response.ok) {
                 const data = await response.json();
@@ -78,16 +79,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return response;
     }
 
-    // Fonction pour rechercher des amis
-    async function searchFriends() {
-        const query = friendSearchInput.value.trim();
-
-        if (!query) {
-            searchMessage.textContent = 'Veuillez entrer un nom d\'utilisateur.';
+     // Fonction pour rechercher des amis
+     async function searchFriends() {
+        if (!friendSearchInput) {
+            console.error("Élément de recherche d'amis introuvable.");
             return;
         }
 
-        searchMessage.textContent = 'Recherche en cours...';
+        const query = friendSearchInput.value.trim();
+
+        if (!query) {
+            if (searchMessage) {
+                searchMessage.textContent = 'Veuillez entrer un nom d\'utilisateur.';
+            }
+            return;
+        }
+
+        if (searchMessage) {
+            searchMessage.textContent = 'Recherche en cours...';
+        }
 
         try {
             console.log("Envoi de la recherche pour l'utilisateur : ", query);
@@ -99,34 +109,52 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             console.log("Résultats de la recherche : ", data);
 
-            searchResults.innerHTML = ''; // Réinitialiser les résultats précédents
-            searchMessage.textContent = `${data.users.length} utilisateur(s) trouvé(s) :`;
+            if (searchResults) {
+                searchResults.innerHTML = ''; // Réinitialiser les résultats précédents
+            }
 
-            data.users.forEach((user) => {
-                const li = document.createElement('li');
-                li.textContent = user.username;
+            if (searchMessage) {
+                searchMessage.textContent = `${data.users.length} utilisateur(s) trouvé(s) :`;
+            }
 
-                // Ajouter un bouton "Ajouter" pour chaque utilisateur
-                const addButton = document.createElement('button');
-                addButton.textContent = 'Ajouter';
-                addButton.onclick = () => addFriend(user.id);
-                li.appendChild(addButton);
+            // Vérifier si des utilisateurs ont été trouvés
+            if (data.users.length === 0) {
+                if (searchResults) {
+                    searchResults.innerHTML = '<li>Aucun utilisateur trouvé.</li>';
+                }
+            } else {
+                data.users.forEach((user) => {
+                    const li = document.createElement('li');
+                    li.classList.add('search-result-item');
+                    li.textContent = user.username;
 
-                searchResults.appendChild(li);
-            });
+                    // Ajouter un bouton "Ajouter" pour chaque utilisateur
+                    const addButton = document.createElement('button');
+                    addButton.textContent = 'Ajouter';
+                    addButton.classList.add('add-friend-btn');
+                    addButton.onclick = () => sendFriendRequest(user.id);
+
+                    li.appendChild(addButton);
+
+                    if (searchResults) {
+                        searchResults.appendChild(li);
+                    }
+                });
+            }
         } catch (error) {
-            console.error("L'utilisateur est introuvable", error);
-            searchMessage.textContent = 'Une erreur est survenue lors de la recherche.';
+            console.error("Erreur lors de la recherche :", error);
+            if (searchMessage) {
+                searchMessage.textContent = 'Une erreur est survenue lors de la recherche.';
+            }
         }
     }
-
-    // Fonction pour ajouter un ami
-    async function addFriend(friendId) {
+    // Fonction pour envoyer une demande d'ami
+    async function sendFriendRequest(friendId) {
         if (!userId) {
-            showNotification('Veuillez vous connecter pour ajouter des amis.');
+            alert('Veuillez vous connecter pour envoyer une demande d\'ami.');
             return;
         }
-    
+
         try {
             console.log("Envoi de la demande d'ami pour l'utilisateur ID : ", friendId);
             const response = await authenticatedFetch(`${apiUrl}/friends/request`, {
@@ -134,33 +162,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ friendId }),
             });
-    
+
             const data = await response.json();
-            console.log("Réponse de l'ajout d'ami : ", data);
-    
+            console.log("Réponse de la demande d'ami : ", data);
+
             if (response.ok) {
-                showNotification('Demande d\'ami envoyée avec succès.', 5000);
+                alert('Demande d\'ami envoyée avec succès.');
                 loadFriendsList(); // Recharger la liste des amis
-            } else if (response.status === 400 && data.error) {
-                showNotification(data.error); // Affiche le message d'erreur renvoyé par le backend
             } else {
-                showNotification('Une erreur est survenue lors de l\'ajout de l\'ami.', 5000);
+                alert(data.message || 'Erreur lors de l\'envoi de la demande d\'ami.');
             }
         } catch (error) {
-            console.error('Erreur lors de l\'ajout d\'ami :', error);
-            showNotification('Une erreur est survenue.', 5000);
+            console.error('Erreur lors de l\'envoi de la demande d\'ami :', error);
+            alert('Une erreur est survenue.');
         }
     }
-    
-    
-    
+
     // Fonction pour charger la liste des amis
     async function loadFriendsList(page = 1, limit = 10) {
         console.log("Chargement de la liste des amis...");
 
         try {
             const response = await authenticatedFetch(`${apiUrl}/friends/list?page=${page}&limit=${limit}`);
-    
+
             if (!response.ok) {
                 throw new Error('Erreur lors du chargement des amis.');
             }
@@ -168,19 +192,66 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             console.log("Liste des amis reçue : ", data);
 
-            friendsUl.innerHTML = ''; // Réinitialiser la liste des amis
-            if (data.friends.length === 0) {
+            if (friendsUl) {
+                friendsUl.innerHTML = ''; // Réinitialiser la liste des amis
+            }
+
+            if (data.friends.length === 0 && friendsUl) {
                 friendsUl.innerHTML = '<li>Aucun ami pour le moment.</li>';
             } else {
                 data.friends.forEach((friend) => {
                     const li = document.createElement('li');
+                    li.classList.add('friend-item');
                     li.textContent = friend.username;
-                    friendsUl.appendChild(li);
+
+                    // Ajouter un bouton "Supprimer" pour chaque ami
+                    const removeButton = document.createElement('button');
+                    removeButton.textContent = 'Supprimer';
+                    removeButton.classList.add('remove-friend-btn');
+                    removeButton.onclick = () => removeFriend(friend.id);
+
+                    li.appendChild(removeButton);
+
+                    if (friendsUl) {
+                        friendsUl.appendChild(li);
+                    }
                 });
             }
         } catch (error) {
             console.error("Erreur lors du chargement de la liste des amis :", error);
-            friendsUl.innerHTML = '<li>Une erreur est survenue lors du chargement des amis.</li>';
+            if (friendsUl) {
+                friendsUl.innerHTML = '<li>Une erreur est survenue lors du chargement des amis.</li>';
+            }
+        }
+    }
+
+    // Fonction pour supprimer un ami
+    async function removeFriend(friendId) {
+        if (!userId) {
+            alert('Veuillez vous connecter pour supprimer un ami.');
+            return;
+        }
+
+        try {
+            console.log("Suppression de l'ami ID : ", friendId);
+            const response = await authenticatedFetch(`${apiUrl}/friends/remove`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ friendId }),
+            });
+
+            const data = await response.json();
+            console.log("Réponse de la suppression de l'ami : ", data);
+
+            if (response.ok) {
+                alert('Ami supprimé avec succès.');
+                loadFriendsList(); // Recharger la liste des amis
+            } else {
+                alert(data.message || 'Erreur lors de la suppression de l\'ami.');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la suppression de l\'ami :', error);
+            alert('Une erreur est survenue.');
         }
     }
 

@@ -9,9 +9,8 @@
 </head>
 <body>
     <!-- Navigation Header -->
-    <%- include('header') %>
-    <div id="notification" class="notification hidden"></div>
-    <!-- Main Content -->
+    <%- include('header') %> <!-- Inclure le fichier header.ejs -->
+
     <div class="main-container">
         <!-- Section des jeux -->
         <div class="games-section">
@@ -23,29 +22,34 @@
 
         <!-- Liste des amis (seulement si connecté) -->
         <% if (user) { %>
-        <div class="profile-friends-section">
-            <div class="friends-list">
-                <h3>Liste d'Amis</h3>
-                <!-- Recherche d'amis -->
-                <div class="search-friend">
-                    <input type="text" id="friend-search" placeholder="Rechercher un ami...">
-                    <button id="search-friend-btn"><i class="fas fa-search"></i> Rechercher</button>
-                </div>
+        <div class="friends-section">
+            <h3>Liste d'Amis</h3>
 
-                <!-- Affichage des résultats de recherche -->
-                <div id="friend-result">
-                    <p id="search-message"></p>
-                    <ul id="search-results"></ul>
-                </div>
+            <div class="search-friend">
+            <input type="text" id="friend-search" placeholder="Rechercher un ami...">
+            <button id="search-friend-btn"><i class="fas fa-search"></i> Rechercher</button>
+        </div>
+        <div id="friend-result">
+            <p id="search-message"></p>
+            <ul id="search-results"></ul> <!-- Assurez-vous d'avoir cet élément dans votre HTML -->
+        </div>
 
-                <!-- Liste des amis -->
-                <ul id="friends-ul">
-                    <li>Aucun ami pour le moment</li>
-                </ul>
+            <!-- Filtre de statut -->
+            <div class="friend-filter">
+                <select id="friend-status-filter">
+                    <option value="all">Tous</option>
+                    <option value="online">En ligne</option>
+                    <option value="offline">Hors ligne</option>
+                    <option value="in-game">En jeu</option>
+                </select>
             </div>
+
+            <!-- Liste des amis -->
+            <ul id="friends-ul">
+                <li>Aucun ami pour le moment</li>
+            </ul>
         </div>
         <% } %>
-
     </div>
 
     <!-- Scripts -->
