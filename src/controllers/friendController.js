@@ -22,6 +22,16 @@ exports.acceptFriendRequest = (req, res) => {
         res.json({ message: 'Demande d\'ami acceptée.', result });
     });
 };
+exports.getFriendsListByUserId = async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const friends = await friendService.getFriendsByUserId(userId);
+        res.json({ friends });
+    } catch (error) {
+        console.error('Erreur lors de la récupération des amis:', error);
+        res.status(500).json({ message: 'Erreur lors de la récupération des amis.' });
+    }
+};
 
 // Refuser une demande d'ami
 exports.rejectFriendRequest = (req, res) => {

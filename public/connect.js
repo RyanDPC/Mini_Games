@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         errorElement.textContent = message;
         errorElement.style.display = 'block';
     }
+
     // Vérifie si l'utilisateur est connecté
     console.log("Utilisateur connecté : ", user);
 
@@ -33,8 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const profilePicElement = document.getElementById('profile-pic');
             const usernameSpan = document.getElementById('username-span');
             if (profilePicElement && usernameSpan) {
-                profilePicElement.src = user.profile_pic;
-                usernameSpan.textContent = user.username;
+                profilePicElement.src = user.profile_pic || '/assets/default-pic.jpg'; // Image par défaut si absente
+                usernameSpan.textContent = user.username || 'Utilisateur inconnu';
             }
         } else {
             console.log("Aucun utilisateur détecté, masquage de la section amis.");
@@ -75,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username, password }),
+                    credentials: 'include', // Inclure les cookies (refresh token)
                 });
 
                 const data = await response.json();
@@ -102,8 +104,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const username = document.getElementById('register-username').value.trim();
             const password = document.getElementById('register-password').value.trim();
+            const email = document.getElementById('register-email').value.trim();
 
-            if (!username || !password) {
+            if (!username || !password || !email) {
                 showError('Veuillez remplir tous les champs.', registerError);
                 return;
             }
@@ -113,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch(`${apiUrl}/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password }),
+                    body: JSON.stringify({ username, password, email }),
                 });
 
                 const data = await response.json();
@@ -135,10 +138,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Gestion de la déconnexion
     if (logoutButton) {
-        logoutButton.addEventListener('click', () => {
+        logoutButton.addEventListener('click', async () => {
             console.log("Déconnexion en cours...");
-            localStorage.removeItem('user');
-            window.location.href = '/login';
+            try {
+                await fetch(`${apiUrl}/logout`, {
+                    method: 'POST',
+                    credentials: 'include', // Inclure les cookies pour supprimer le refresh token côté serveur
+                });
+            } catch (error) {
+                console.error("Erreur lors de la déconnexion : ", error);
+            } finally {
+                localStorage.removeItem('user');
+                window.location.href = '/login';
+            }
         });
     }
 });

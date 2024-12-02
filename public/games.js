@@ -66,14 +66,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Fetch the list of games from the server
-    function fetchGames() {
-        fetch("/api/games")
-            .then((response) => response.json())
-            .then((games) => {
-                displayGames(games);
-            })
-            .catch((error) => {
-                console.error("Error fetching games:", error);
-            });
-    }
+  // Fetch the list of games from the server
+function fetchGames() {
+    fetch("/api/games")
+        .then((response) => response.json())
+        .then((games) => {
+            console.log("Games data fetched:", games); // Ajoutez cette ligne
+            displayGames(games);
+        })
+        .catch((error) => {
+            console.error("Error fetching games:", error);
+        });
+}
+
 });

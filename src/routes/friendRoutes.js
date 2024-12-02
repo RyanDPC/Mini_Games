@@ -21,4 +21,7 @@ router.get('/list', tokenService.verifyToken, friendController.getFriendsList);
 // Route pour rechercher des utilisateurs
 router.get('/search', tokenService.verifyToken, friendController.searchUsers);
 
+// Route pour récupérer la liste des amis par userId
+router.get('/:userId', tokenService.verifyToken, friendController.getFriendsListByUserId);
+
 module.exports = router;

@@ -12,4 +12,10 @@ router.post('/login', userController.login);
 // Route pour récupérer le profil utilisateur
 router.get('/profile', tokenService.verifyToken, userController.getProfile);
 
+// Route pour rafraîchir le token d'accès
+router.post('/refresh', userController.refreshToken);
+
+// Route pour la déconnexion de l'utilisateur
+router.post('/logout', userController.logout);
+
 module.exports = router;

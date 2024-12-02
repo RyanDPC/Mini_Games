@@ -12,11 +12,20 @@ const profilePics = [
 ];
 
 // Fonction pour générer un token JWT
-const generateToken = (user) => {
+const generateAccessToken = (user) => {
     return jwt.sign(
         { userId: user.id, username: user.username },
-        'SECRET_KEY', // Remplacez par une clé secrète sécurisée
-        { expiresIn: '1h' }
+        process.env.JWT_SECRET,
+        { expiresIn: '15m' }
+    );
+};
+
+// Fonction pour générer un refresh token
+const generateRefreshToken = (user) => {
+    return jwt.sign(
+        { userId: user.id, username: user.username },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: '7d' }
     );
 };
 
@@ -25,46 +34,32 @@ exports.register = async (req, res) => {
     const { username, password, email } = req.body;
 
     if (!username || !password || !email) {
-        console.error("Erreur: Champs manquants lors de l'inscription.");
         return res.status(400).json({ message: 'Tous les champs sont requis.' });
     }
 
     try {
-        userModel.getUserByUsername(username, (err, existingUser) => {
-            if (err) {
-                console.error("Erreur lors de la vérification de l'utilisateur :", err);
-                return res.status(500).json({ message: 'Erreur du serveur.' });
-            }
+        const existingUser = await userModel.getUserByUsername(username);
+        if (existingUser) {
+            return res.status(400).json({ message: 'Nom d\'utilisateur déjà pris.' });
+        }
 
-            if (existingUser) {
-                console.log("Nom d'utilisateur déjà pris :", username);
-                return res.status(400).json({ message: 'Nom d\'utilisateur déjà pris.' });
-            }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const randomProfilePic = profilePics[Math.floor(Math.random() * profilePics.length)];
+        const defaultTokens = 100;
 
-            bcrypt.hash(password, 10, (err, hashedPassword) => {
-                if (err) {
-                    console.error("Erreur lors du hachage du mot de passe :", err);
-                    return res.status(500).json({ message: 'Erreur lors du hachage du mot de passe.' });
-                }
+        const newUser = await userModel.createUser(username, hashedPassword, email, randomProfilePic, defaultTokens);
 
-                // Choisir une photo de profil aléatoire
-                const randomProfilePic = profilePics[Math.floor(Math.random() * profilePics.length)];
+        const accessToken = generateAccessToken(newUser);
+        const refreshToken = generateRefreshToken(newUser);
 
-                // Tokens par défaut (par exemple 100)
-                const defaultTokens = 100;
-
-                userModel.createUser(username, hashedPassword, email, randomProfilePic, defaultTokens, (err, newUser) => {
-                    if (err) {
-                        console.error("Erreur lors de la création de l'utilisateur :", err);
-                        return res.status(500).json({ message: 'Erreur lors de la création de l\'utilisateur.' });
-                    }
-
-                    const token = generateToken(newUser);
-                    console.log("Utilisateur inscrit avec succès :", newUser.username);
-                    res.json({ message: 'Inscription réussie.', token, user: newUser });
-                });
-            });
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
         });
+
+        res.json({ message: 'Inscription réussie.', accessToken, user: { id: newUser.id, username: newUser.username, email: newUser.email, profile_pic: newUser.profile_pic, tokens: newUser.tokens } });
     } catch (error) {
         console.error("Erreur serveur lors de l'inscription :", error);
         return res.status(500).json({ message: 'Erreur serveur.' });
@@ -76,67 +71,85 @@ exports.login = async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        console.error("Erreur: Champs manquants lors de la connexion.");
         return res.status(400).json({ message: 'Nom d\'utilisateur et mot de passe requis.' });
     }
 
-    userModel.getUserByUsername(username, (err, user) => {
-        if (err) {
-            console.error("Erreur lors de la récupération de l'utilisateur :", err);
-            return res.status(500).json({ message: 'Erreur du serveur.' });
-        }
-
+    try {
+        const user = await userModel.getUserByUsername(username);
         if (!user) {
-            console.log("Utilisateur introuvable :", username);
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
 
-        bcrypt.compare(password, user.password, (err, isMatch) => {
-            if (err) {
-                console.error("Erreur lors de la vérification du mot de passe :", err);
-                return res.status(500).json({ message: 'Erreur lors de la vérification du mot de passe.' });
-            }
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Mot de passe incorrect.' });
+        }
 
-            if (!isMatch) {
-                console.log("Mot de passe incorrect pour l'utilisateur :", username);
-                return res.status(400).json({ message: 'Mot de passe incorrect.' });
-            }
+        req.session.user = {
+            id: user.id,
+            username: user.username,
+            profile_pic: user.profile_pic,
+            tokens: user.tokens
+        };
 
-            // Stocker l'utilisateur dans la session
-            req.session.user = {
-                id: user.id,
-                username: user.username,
-                profile_pic: user.profile_pic,
-                tokens: user.tokens // Ajoutez d'autres informations si nécessaire
-            };
+        const accessToken = generateAccessToken(user);
+        const refreshToken = generateRefreshToken(user);
 
-            const token = generateToken(user);
-            console.log("Connexion réussie pour l'utilisateur :", username);
-            res.json({ 
-                message: 'Connexion réussie.', 
-                token, 
-                user: req.session.user // Renvoyer l'utilisateur avec la session
-            });
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
         });
-    });
+
+        res.json({ message: 'Connexion réussie.', accessToken, user: { id: user.id, username: user.username, profile_pic: user.profile_pic, tokens: user.tokens } });
+    } catch (error) {
+        console.error("Erreur serveur lors de la connexion :", error);
+        return res.status(500).json({ message: 'Erreur serveur.' });
+    }
 };
 
 // Récupérer le profil utilisateur
-exports.getProfile = (req, res) => {
+exports.getProfile = async (req, res) => {
     const { userId } = req.user;
 
-    userModel.getUserById(userId, (err, user) => {
-        if (err) {
-            console.error("Erreur lors de la récupération du profil utilisateur :", err);
-            return res.status(500).json({ message: 'Erreur lors de la récupération du profil utilisateur.' });
-        }
-
+    try {
+        const user = await userModel.getUserById(userId);
         if (!user) {
-            console.log("Utilisateur introuvable pour l'ID :", userId);
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
 
-        console.log("Profil utilisateur récupéré :", user.username);
-        res.json({ user });
+        res.json({ user: { id: user.id, username: user.username, email: user.email, profile_pic: user.profile_pic, tokens: user.tokens } });
+    } catch (error) {
+        console.error("Erreur lors de la récupération du profil utilisateur :", error);
+        return res.status(500).json({ message: 'Erreur lors de la récupération du profil utilisateur.' });
+    }
+};
+
+// Rafraîchir le token d'accès
+exports.refreshToken = (req, res) => {
+    const { refreshToken } = req.cookies;
+
+    if (!refreshToken) {
+        return res.status(403).json({ message: 'Refresh token manquant.' });
+    }
+
+    try {
+        const user = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+        const newAccessToken = generateAccessToken(user);
+        res.json({ accessToken: newAccessToken });
+    } catch (error) {
+        return res.status(403).json({ message: 'Refresh token invalide ou expiré.' });
+    }
+};
+
+// Déconnexion de l'utilisateur
+exports.logout = (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Erreur lors de la déconnexion :', err);
+        }
+        res.clearCookie('refreshToken');
+        res.status(200).json({ message: 'Déconnexion réussie.' });
     });
 };

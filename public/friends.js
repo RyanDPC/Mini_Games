@@ -10,9 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
         ? 'https://localhost:4000/api'
         : 'https://localhost:3000/api';
 
+    console.log("API URL déterminée : ", apiUrl);
+
     // Récupération de l'utilisateur connecté depuis localStorage
     const user = JSON.parse(localStorage.getItem('user'));
     const userId = user ? user.id : null;
+
+    console.log("Utilisateur connecté : ", user);
 
     // Fonction pour rechercher des amis
     async function searchFriends() {
@@ -26,12 +30,15 @@ document.addEventListener('DOMContentLoaded', () => {
         searchMessage.textContent = 'Recherche en cours...';
 
         try {
+            console.log("Envoi de la recherche pour l'utilisateur : ", query);
             const response = await fetch(`${apiUrl}/users/search?username=${encodeURIComponent(query)}`);
             if (!response.ok) {
                 throw new Error('Erreur lors de la recherche.');
             }
 
             const data = await response.json();
+            console.log("Résultats de la recherche : ", data);
+
             searchResults.innerHTML = ''; // Réinitialiser les résultats précédents
             searchMessage.textContent = `${data.users.length} utilisateur(s) trouvé(s) :`;
 
@@ -48,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchResults.appendChild(li);
             });
         } catch (error) {
-            console.error('Erreur:', error);
+            console.error('Erreur lors de la recherche :', error);
             searchMessage.textContent = 'Une erreur est survenue lors de la recherche.';
         }
     }
@@ -61,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
+            console.log("Envoi de la demande d'ami pour l'utilisateur ID : ", friendId);
             const response = await fetch(`${apiUrl}/friends/add`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -68,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const data = await response.json();
+            console.log("Réponse de l'ajout d'ami : ", data);
 
             if (response.ok) {
                 alert('Ami ajouté avec succès.');
@@ -76,26 +85,56 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert(data.message || 'Erreur lors de l\'ajout.');
             }
         } catch (error) {
-            console.error('Erreur:', error);
+            console.error('Erreur lors de l\'ajout d\'ami :', error);
             alert('Une erreur est survenue.');
         }
     }
 
     // Fonction pour charger la liste des amis
-    async function loadFriendsList() {
-        if (!userId) {
-            friendsUl.innerHTML = '<li>Connectez-vous pour voir votre liste d\'amis.</li>';
+    async function loadFriendsList(page = 1, limit = 10) {
+        const userToken = localStorage.getItem('token');
+        console.log("Vérification du token de l'utilisateur...");
+    
+        if (!userToken) {
+            console.log("Token utilisateur manquant, redirection vers la page de connexion.");
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
             return;
         }
-
+    
         try {
-            const response = await fetch(`${apiUrl}/friends/${userId}`);
-            if (!response.ok) throw new Error('Erreur lors du chargement des amis.');
-
+            // Vérification de la validité du token via un appel à l'API
+            console.log("Vérification de la validité du token...");
+            const tokenValidationResponse = await fetch(`${apiUrl}/auth/validate-token`, {
+                headers: {
+                    'Authorization': `Bearer ${userToken}`
+                }
+            });
+    
+            if (!tokenValidationResponse.ok) {
+                console.error("Token non valide, redirection vers la page de connexion.");
+                if (window.location.pathname !== '/login') {
+                    window.location.href = '/login';
+                }
+                return;
+            }
+    
+            console.log("Token valide, chargement de la liste des amis...");
+            const response = await fetch(`${apiUrl}/friends/list?page=${page}&limit=${limit}`, {
+                headers: {
+                    'Authorization': `Bearer ${userToken}`
+                }
+            });
+    
+            if (!response.ok) {
+                throw new Error('Erreur lors du chargement des amis.');
+            }
+    
             const data = await response.json();
-
-            friendsUl.innerHTML = ''; // Réinitialiser la liste
-
+            console.log("Liste des amis reçue : ", data);
+    
+            friendsUl.innerHTML = ''; // Réinitialiser la liste des amis
             if (data.friends.length === 0) {
                 friendsUl.innerHTML = '<li>Aucun ami pour le moment.</li>';
             } else {
@@ -106,13 +145,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         } catch (error) {
-            console.error('Erreur:', error);
-            friendsUl.innerHTML = '<li>Une erreur est survenue lors du chargement.</li>';
+            console.error("Erreur lors du chargement de la liste des amis :", error);
+            friendsUl.innerHTML = '<li>Une erreur est survenue lors du chargement des amis.</li>';
         }
     }
+    
 
     // Ajout d'un écouteur d'événement sur le bouton de recherche
     if (searchFriendButton) {
+        console.log("Ajout de l'écouteur sur le bouton de recherche d'ami.");
         searchFriendButton.addEventListener('click', searchFriends);
     } else {
         console.error('Le bouton "search-friend-btn" est introuvable.');
@@ -120,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Charger la liste des amis au démarrage
     if (friendsUl) {
+        console.log("Chargement initial de la liste des amis...");
         loadFriendsList();
     }
 });
