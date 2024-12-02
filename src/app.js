@@ -36,6 +36,22 @@ app.use(helmet({
         },
     },
 }));
+app.post('/token/refresh', (req, res) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+        return res.status(401).json({ message: 'Token de rafraîchissement manquant.' });
+    }
+
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+        if (err) {
+            return res.status(403).json({ message: 'Token de rafraîchissement invalide ou expiré.' });
+        }
+
+        const newAccessToken = generateAccessToken({ id: user.id, username: user.username });
+        res.json({ accessToken: newAccessToken });
+    });
+});
 
 // Configuration des middlewares
 app.use(cookieParser());
@@ -71,13 +87,11 @@ app.use(express.static(path.join(__dirname, '../public')));
 const userRoutes = require('./routes/userRoutes');
 const friendRoutes = require('./routes/friendRoutes');
 const gameRoutes = require('./routes/gameRoutes');
-const authRoutes = require('./routes/authRoutes');
 
 // Définir les routes d'API
 app.use('/api/users', userRoutes);
 app.use('/api/friends', friendRoutes);
 app.use('/api/games', gameRoutes);
-app.use('/api/auth', authRoutes);
 
 // Routes pour les pages principales
 app.get('/', (req, res) => {

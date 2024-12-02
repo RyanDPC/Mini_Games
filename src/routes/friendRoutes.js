@@ -1,27 +1,24 @@
 const express = require('express');
 const router = express.Router();
 const friendController = require('../controllers/friendController');
-const tokenService = require('../services/tokenService');
+const auth = require('../middlewares/auth');
 
 // Route pour envoyer une demande d'ami
-router.post('/request', tokenService.verifyToken, friendController.sendFriendRequest);
+router.post('/request', auth.authenticateToken, friendController.sendFriendRequest);
 
 // Route pour accepter une demande d'ami
-router.post('/accept', tokenService.verifyToken, friendController.acceptFriendRequest);
+router.post('/accept', auth.authenticateToken, friendController.acceptFriendRequest);
 
 // Route pour refuser une demande d'ami
-router.post('/reject', tokenService.verifyToken, friendController.rejectFriendRequest);
+router.post('/reject', auth.authenticateToken, friendController.rejectFriendRequest);
 
 // Route pour supprimer un ami
-router.post('/remove', tokenService.verifyToken, friendController.removeFriend);
+router.post('/remove', auth.authenticateToken, friendController.removeFriend);
 
 // Route pour récupérer la liste des amis (avec pagination)
-router.get('/list', tokenService.verifyToken, friendController.getFriendsList);
-
-// Route pour rechercher des utilisateurs
-router.get('/search', tokenService.verifyToken, friendController.searchUsers);
+router.get('/list', auth.authenticateToken, friendController.getFriendsList);
 
 // Route pour récupérer la liste des amis par userId
-router.get('/:userId', tokenService.verifyToken, friendController.getFriendsListByUserId);
+router.get('/:userId', auth.authenticateToken, friendController.getFriendsListByUserId);
 
 module.exports = router;

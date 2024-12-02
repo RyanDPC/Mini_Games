@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const tokenService = require('../services/tokenService');
+const auth = require('../middlewares/auth');
 
 // Route pour l'enregistrement d'un utilisateur
 router.post('/register', userController.register);
@@ -10,12 +10,12 @@ router.post('/register', userController.register);
 router.post('/login', userController.login);
 
 // Route pour récupérer le profil utilisateur
-router.get('/profile', tokenService.verifyToken, userController.getProfile);
-
-// Route pour rafraîchir le token d'accès
-router.post('/refresh', userController.refreshToken);
+router.get('/profile', auth.authenticateToken, userController.getProfile);
 
 // Route pour la déconnexion de l'utilisateur
 router.post('/logout', userController.logout);
+
+// Route pour rechercher des utilisateurs
+router.get('/search', userController.searchUsers);
 
 module.exports = router;

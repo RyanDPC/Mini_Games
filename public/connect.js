@@ -34,13 +34,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const profilePicElement = document.getElementById('profile-pic');
             const usernameSpan = document.getElementById('username-span');
             if (profilePicElement && usernameSpan) {
-                profilePicElement.src = user.profile_pic || '/assets/default-pic.jpg'; // Image par défaut si absente
-                usernameSpan.textContent = user.username || 'Utilisateur inconnu';
+                // Construction de l'URL complète de la photo de profil
+                profilePicElement.src = user.profile_pic 
+                    ? `${window.location.origin}/${user.profile_pic}` 
+                    : `${window.location.origin}/assets/pdp/default-pic.jpg`;
+            } else {
+                console.log("Aucun utilisateur détecté, masquage de la section amis.");
+                profileFriendsSection.style.display = 'none';
             }
-        } else {
-            console.log("Aucun utilisateur détecté, masquage de la section amis.");
-            profileFriendsSection.style.display = 'none';
-        }
+        } 
     }
 
     // Gestion du bouton pour ouvrir le formulaire de connexion
@@ -49,6 +51,66 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Ouverture du formulaire de connexion.");
             window.location.href = '/login';
         });
+    }
+
+    async function refreshAccessToken() {
+        try {
+            const response = await fetch(`${apiUrl}/token/refresh`, {
+                method: 'POST',
+                credentials: 'include' // Pour inclure les cookies (token de rafraîchissement)
+            });
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('accessToken', data.accessToken);
+                return data.accessToken;
+            } else {
+                console.error("Erreur lors du rafraîchissement du token.");
+                return null;
+            }
+        } catch (error) {
+            console.error("Erreur lors du rafraîchissement du token : ", error);
+            return null;
+        }
+    }
+    
+
+    // Fonction pour gérer les requêtes avec rafraîchissement de token
+    async function authenticatedFetch(url, options = {}) {
+        let accessToken = localStorage.getItem('accessToken');
+
+        if (!accessToken) {
+            console.log("Token d'accès manquant, tentative de rafraîchissement...");
+            accessToken = await refreshAccessToken();
+            if (!accessToken) {
+                console.log("Redirection vers la page de connexion.");
+                window.location.href = '/login';
+                return;
+            }
+            localStorage.setItem('accessToken', accessToken);
+        }
+
+        options.headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${accessToken}`,
+        };
+
+        const response = await fetch(url, options);
+
+        if (response.status === 401) {
+            console.log("Token d'accès expiré, tentative de rafraîchissement...");
+            accessToken = await refreshAccessToken();
+            if (!accessToken) {
+                console.log("Redirection vers la page de connexion.");
+                window.location.href = '/login';
+                return;
+            }
+            localStorage.setItem('accessToken', accessToken);
+
+            options.headers['Authorization'] = `Bearer ${accessToken}`;
+            return fetch(url, options);
+        }
+
+        return response;
     }
 
     // Gestion du bouton de connexion dans le formulaire
@@ -85,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     console.log("Connexion réussie. Stockage de l'utilisateur...");
                     localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('accessToken', data.accessToken);
                     window.location.href = `/?username=${encodeURIComponent(data.user.username)}`;
                 } else {
                     showError(data.message || 'Erreur de connexion.', loginError);
@@ -125,6 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     console.log("Inscription réussie. Stockage de l'utilisateur...");
                     localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('accessToken', data.accessToken);
                     window.location.href = `/?username=${encodeURIComponent(data.user.username)}`;
                 } else {
                     showError(data.message || 'Erreur d\'inscription.', registerError);
@@ -141,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logoutButton.addEventListener('click', async () => {
             console.log("Déconnexion en cours...");
             try {
-                await fetch(`${apiUrl}/logout`, {
+                await authenticatedFetch(`${apiUrl}/logout`, {
                     method: 'POST',
                     credentials: 'include', // Inclure les cookies pour supprimer le refresh token côté serveur
                 });
@@ -149,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error("Erreur lors de la déconnexion : ", error);
             } finally {
                 localStorage.removeItem('user');
+                localStorage.removeItem('accessToken');
                 window.location.href = '/login';
             }
         });

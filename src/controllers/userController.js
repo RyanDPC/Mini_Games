@@ -1,6 +1,8 @@
+// Importer les modules nécessaires
 const userModel = require('../models/user');
+const db = require('../../config/db'); // Importer la connexion à la base de données
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
+const auth = require('../middlewares/auth'); // Importer votre middleware auth
 
 // Liste des images de profil possibles
 const profilePics = [
@@ -10,24 +12,6 @@ const profilePics = [
     '/assets/pdp/4.jpg',
     '/assets/pdp/5.jpg'
 ];
-
-// Fonction pour générer un token JWT
-const generateAccessToken = (user) => {
-    return jwt.sign(
-        { userId: user.id, username: user.username },
-        process.env.JWT_SECRET,
-        { expiresIn: '15m' }
-    );
-};
-
-// Fonction pour générer un refresh token
-const generateRefreshToken = (user) => {
-    return jwt.sign(
-        { userId: user.id, username: user.username },
-        process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: '7d' }
-    );
-};
 
 // Enregistrement d'un utilisateur
 exports.register = async (req, res) => {
@@ -49,9 +33,11 @@ exports.register = async (req, res) => {
 
         const newUser = await userModel.createUser(username, hashedPassword, email, randomProfilePic, defaultTokens);
 
-        const accessToken = generateAccessToken(newUser);
-        const refreshToken = generateRefreshToken(newUser);
+        // Générer des tokens
+        const accessToken = auth.generateAccessToken(newUser);
+        const refreshToken = auth.generateRefreshToken(newUser);
 
+        // Envoyer le refresh token dans un cookie HTTP-only
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -59,7 +45,17 @@ exports.register = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
         });
 
-        res.json({ message: 'Inscription réussie.', accessToken, user: { id: newUser.id, username: newUser.username, email: newUser.email, profile_pic: newUser.profile_pic, tokens: newUser.tokens } });
+        res.json({ 
+            message: 'Inscription réussie.', 
+            accessToken, 
+            user: {
+                id: newUser.id,
+                username: newUser.username,
+                email: newUser.email,
+                profile_pic: newUser.profile_pic,
+                tokens: newUser.tokens 
+            } 
+        });
     } catch (error) {
         console.error("Erreur serveur lors de l'inscription :", error);
         return res.status(500).json({ message: 'Erreur serveur.' });
@@ -85,6 +81,7 @@ exports.login = async (req, res) => {
             return res.status(400).json({ message: 'Mot de passe incorrect.' });
         }
 
+        // Stocker l'utilisateur dans la session
         req.session.user = {
             id: user.id,
             username: user.username,
@@ -92,9 +89,11 @@ exports.login = async (req, res) => {
             tokens: user.tokens
         };
 
-        const accessToken = generateAccessToken(user);
-        const refreshToken = generateRefreshToken(user);
+        // Générer des tokens
+        const accessToken = auth.generateAccessToken(user);
+        const refreshToken = auth.generateRefreshToken(user);
 
+        // Envoyer le refresh token dans un cookie HTTP-only
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
@@ -102,13 +101,46 @@ exports.login = async (req, res) => {
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 jours
         });
 
-        res.json({ message: 'Connexion réussie.', accessToken, user: { id: user.id, username: user.username, profile_pic: user.profile_pic, tokens: user.tokens } });
+        res.json({ 
+            message: 'Connexion réussie.', 
+            accessToken, 
+            user: {
+                id: user.id,
+                username: user.username,
+                profile_pic: user.profile_pic,
+                tokens: user.tokens,
+            } 
+        });
     } catch (error) {
         console.error("Erreur serveur lors de la connexion :", error);
         return res.status(500).json({ message: 'Erreur serveur.' });
     }
 };
+// Recherche d'utilisateurs
+exports.searchUsers = (req, res) => {
+    const { username } = req.query;
+    console.log('Requête reçue pour la recherche :', username); // Log pour la requête reçue
 
+    if (!username) {
+        return res.status(400).json({ message: 'Paramètre "username" requis pour la recherche.' });
+    }
+
+    const sql = 'SELECT id, username FROM users WHERE username LIKE ?';
+    db.all(sql, [`%${username}%`], (err, users) => {
+        if (err) {
+            console.error('Erreur lors de la recherche des utilisateurs :', err); // Log de l'erreur SQL
+            return res.status(500).json({ error: 'Erreur lors de la recherche des utilisateurs.' });
+        }
+
+        if (users.length === 0) {
+            console.log(`Aucun utilisateur trouvé avec le nom : ${username}`); // Log lorsque l'utilisateur est introuvable
+            return res.status(404).json({ message: 'Aucun utilisateur trouvé.' });
+        }
+
+        console.log('Résultat de la recherche :', users); // Log des utilisateurs trouvés
+        res.json({ users });
+    });
+};
 // Récupérer le profil utilisateur
 exports.getProfile = async (req, res) => {
     const { userId } = req.user;
@@ -119,30 +151,20 @@ exports.getProfile = async (req, res) => {
             return res.status(404).json({ message: 'Utilisateur introuvable.' });
         }
 
-        res.json({ user: { id: user.id, username: user.username, email: user.email, profile_pic: user.profile_pic, tokens: user.tokens } });
+        res.json({ 
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                profile_pic: user.profile_pic,
+                tokens: user.tokens 
+            } 
+        });
     } catch (error) {
         console.error("Erreur lors de la récupération du profil utilisateur :", error);
         return res.status(500).json({ message: 'Erreur lors de la récupération du profil utilisateur.' });
     }
 };
-
-// Rafraîchir le token d'accès
-exports.refreshToken = (req, res) => {
-    const { refreshToken } = req.cookies;
-
-    if (!refreshToken) {
-        return res.status(403).json({ message: 'Refresh token manquant.' });
-    }
-
-    try {
-        const user = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
-        const newAccessToken = generateAccessToken(user);
-        res.json({ accessToken: newAccessToken });
-    } catch (error) {
-        return res.status(403).json({ message: 'Refresh token invalide ou expiré.' });
-    }
-};
-
 // Déconnexion de l'utilisateur
 exports.logout = (req, res) => {
     req.session.destroy((err) => {

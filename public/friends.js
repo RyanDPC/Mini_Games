@@ -18,6 +18,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("Utilisateur connecté : ", user);
 
+    // Fonction pour rafraîchir le token d'accès
+    async function refreshAccessToken() {
+        try {
+            const response = await fetch(`${apiUrl}/token/refresh`, {
+                method: 'POST',
+                credentials: 'include', // Inclure les cookies (refresh token)
+            });
+            if (response.ok) {
+                const data = await response.json();
+                console.log("Token rafraîchi avec succès.");
+                localStorage.setItem('accessToken', data.accessToken);
+                return data.accessToken;
+            } else {
+                console.error("Erreur lors du rafraîchissement du token.");
+                return null;
+            }
+        } catch (error) {
+            console.error("Erreur lors du rafraîchissement du token : ", error);
+            return null;
+        }
+    }
+
+    // Fonction pour gérer les requêtes avec rafraîchissement de token
+    async function authenticatedFetch(url, options = {}) {
+        let accessToken = localStorage.getItem('accessToken');
+
+        if (!accessToken) {
+            console.log("Token d'accès manquant, tentative de rafraîchissement...");
+            accessToken = await refreshAccessToken();
+            if (!accessToken) {
+                console.log("Redirection vers la page de connexion.");
+                window.location.href = '/login';
+                return;
+            }
+        }
+
+        options.headers = {
+            ...options.headers,
+            'Authorization': `Bearer ${accessToken}`,
+        };
+
+        const response = await fetch(url, options);
+
+        if (response.status === 401) {
+            console.log("Token d'accès expiré, tentative de rafraîchissement...");
+            accessToken = await refreshAccessToken();
+            if (!accessToken) {
+                console.log("Redirection vers la page de connexion.");
+                window.location.href = '/login';
+                return;
+            }
+            localStorage.setItem('accessToken', accessToken);
+
+            options.headers['Authorization'] = `Bearer ${accessToken}`;
+            return fetch(url, options);
+        }
+
+        return response;
+    }
+
     // Fonction pour rechercher des amis
     async function searchFriends() {
         const query = friendSearchInput.value.trim();
@@ -31,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             console.log("Envoi de la recherche pour l'utilisateur : ", query);
-            const response = await fetch(`${apiUrl}/users/search?username=${encodeURIComponent(query)}`);
+            const response = await authenticatedFetch(`${apiUrl}/users/search?username=${encodeURIComponent(query)}`);
             if (!response.ok) {
                 throw new Error('Erreur lors de la recherche.');
             }
@@ -55,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 searchResults.appendChild(li);
             });
         } catch (error) {
-            console.error('Erreur lors de la recherche :', error);
+            console.error("L'utilisateur est introuvable", error);
             searchMessage.textContent = 'Une erreur est survenue lors de la recherche.';
         }
     }
@@ -66,18 +126,18 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Veuillez vous connecter pour ajouter des amis.');
             return;
         }
-
+    
         try {
             console.log("Envoi de la demande d'ami pour l'utilisateur ID : ", friendId);
-            const response = await fetch(`${apiUrl}/friends/add`, {
+            const response = await authenticatedFetch(`${apiUrl}/friends/request`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, friendId }),
+                body: JSON.stringify({ friendId }),
             });
-
+    
             const data = await response.json();
             console.log("Réponse de l'ajout d'ami : ", data);
-
+    
             if (response.ok) {
                 alert('Ami ajouté avec succès.');
                 loadFriendsList(); // Recharger la liste des amis
@@ -89,51 +149,22 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Une erreur est survenue.');
         }
     }
-
+    
+    
     // Fonction pour charger la liste des amis
     async function loadFriendsList(page = 1, limit = 10) {
-        const userToken = localStorage.getItem('token');
-        console.log("Vérification du token de l'utilisateur...");
-    
-        if (!userToken) {
-            console.log("Token utilisateur manquant, redirection vers la page de connexion.");
-            if (window.location.pathname !== '/login') {
-                window.location.href = '/login';
-            }
-            return;
-        }
-    
+        console.log("Chargement de la liste des amis...");
+
         try {
-            // Vérification de la validité du token via un appel à l'API
-            console.log("Vérification de la validité du token...");
-            const tokenValidationResponse = await fetch(`${apiUrl}/auth/validate-token`, {
-                headers: {
-                    'Authorization': `Bearer ${userToken}`
-                }
-            });
-    
-            if (!tokenValidationResponse.ok) {
-                console.error("Token non valide, redirection vers la page de connexion.");
-                if (window.location.pathname !== '/login') {
-                    window.location.href = '/login';
-                }
-                return;
-            }
-    
-            console.log("Token valide, chargement de la liste des amis...");
-            const response = await fetch(`${apiUrl}/friends/list?page=${page}&limit=${limit}`, {
-                headers: {
-                    'Authorization': `Bearer ${userToken}`
-                }
-            });
+            const response = await authenticatedFetch(`${apiUrl}/friends/list?page=${page}&limit=${limit}`);
     
             if (!response.ok) {
                 throw new Error('Erreur lors du chargement des amis.');
             }
-    
+
             const data = await response.json();
             console.log("Liste des amis reçue : ", data);
-    
+
             friendsUl.innerHTML = ''; // Réinitialiser la liste des amis
             if (data.friends.length === 0) {
                 friendsUl.innerHTML = '<li>Aucun ami pour le moment.</li>';
@@ -149,7 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
             friendsUl.innerHTML = '<li>Une erreur est survenue lors du chargement des amis.</li>';
         }
     }
-    
 
     // Ajout d'un écouteur d'événement sur le bouton de recherche
     if (searchFriendButton) {
