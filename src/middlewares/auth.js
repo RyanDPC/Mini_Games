@@ -13,7 +13,7 @@ exports.generateAccessToken = (user) => {
     return jwt.sign(
         { id: user.id, username: user.username }, // Assurez-vous d'utiliser _id de manière cohérente
         process.env.JWT_SECRET,
-        { expiresIn: '15m' }
+        { expiresIn: '1h' }
     );
 };
 

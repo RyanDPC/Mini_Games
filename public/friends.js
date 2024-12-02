@@ -123,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fonction pour ajouter un ami
     async function addFriend(friendId) {
         if (!userId) {
-            alert('Veuillez vous connecter pour ajouter des amis.');
+            showNotification('Veuillez vous connecter pour ajouter des amis.');
             return;
         }
     
@@ -139,16 +139,19 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Réponse de l'ajout d'ami : ", data);
     
             if (response.ok) {
-                alert('Ami ajouté avec succès.');
+                showNotification('Demande d\'ami envoyée avec succès.', 5000);
                 loadFriendsList(); // Recharger la liste des amis
+            } else if (response.status === 400 && data.error) {
+                showNotification(data.error); // Affiche le message d'erreur renvoyé par le backend
             } else {
-                alert(data.message || 'Erreur lors de l\'ajout.');
+                showNotification('Une erreur est survenue lors de l\'ajout de l\'ami.', 5000);
             }
         } catch (error) {
             console.error('Erreur lors de l\'ajout d\'ami :', error);
-            alert('Une erreur est survenue.');
+            showNotification('Une erreur est survenue.', 5000);
         }
     }
+    
     
     
     // Fonction pour charger la liste des amis
