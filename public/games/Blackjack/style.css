@@ -1,27 +1,36 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #347D65;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  margin: 0;
+}
+
 #game-container {
   width: 100%;
-  max-width: 800px;
-  background-color: #3a4a5e;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .player-area, .dealer-area {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 15px;
-  background-color: #2a3b50;
-  border-radius: 10px;
 }
 
 .hand {
   display: flex;
   gap: 10px;
   margin-top: 10px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
+  position: relative;
+}
+
+.shift-card {
+  animation: shift-card 0.3s ease-out;
 }
 
 .cards {
@@ -30,40 +39,106 @@
   background-size: cover;
   background-repeat: no-repeat;
   border-radius: 5px;
-  animation: slideIn 0.5s ease forwards;
+  position: relative;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  animation: slideIn 0.3s ease-out;
 }
 
-.feedback {
-  margin: 20px 0;
-  padding: 10px;
-  text-align: center;
+.cards:hover:not(:last-child) {
+  transform: translateX(-10px) scale(1.08);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.7);
+}
+
+.cards:hover:last-child {
+  transform: scale(1.08);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.7);
+}
+
+.cards:not(:first-child) {
+  margin-left: -50px;
+}
+
+.flip {
+  animation: flip-card 0.3s;
+}
+
+.score {
+  margin-top: 10px;
   font-size: 18px;
   font-weight: bold;
-  color: #fff;
-  background-color: #2a3b50;
-  border-radius: 8px;
-  transition: all 0.3s ease;
+  border: 1px solid;
+  border-color: #caac00;
+  background-color: #202020;
+  border-radius: 5px;
+  padding: 5px;
 }
 
-.feedback.win {
-  background-color: #28a745;
+.action-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
 }
 
-.feedback.lose {
-  background-color: #dc3545;
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  background-color: #007bff;
+  color: white;
+  transition: background-color 0.3s ease;
 }
 
-.feedback.tie {
-  background-color: #ffc107;
+button:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+h1 {
+  margin-bottom: 30px;
+}
+
+h2 {
+  margin: 0;
+  font-weight: bold;
+  text-transform: uppercase;
 }
 
 @keyframes slideIn {
   from {
-    transform: translateY(-30px);
+    transform: translateY(-100px);
     opacity: 0;
   }
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+@keyframes flip-card {
+  0% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes shift-card {
+  from {
+    margin-left: 25px;
+  }
+  to {
+    margin-left: 0px;
   }
 }

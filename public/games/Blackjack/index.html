@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
-
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,29 +7,27 @@
     <link rel="stylesheet" href="../style.css">
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-    <h1>Blackjack</h1>
     <div id="game-container">
         <div class="dealer-area">
-            <h2>Croupier</h2>
             <div id="dealer-hand" class="hand"></div>
-            <p id="dealer-score" class="score">Score: 0</p>
+            <p id="dealer-score" class="score">0</p>
         </div>
-        <div id="feedback-zone" class="feedback">Prêt à commencer ? Cliquez sur "Nouvelle Partie" !</div>
         <div class="player-area">
-            <h2>Joueur</h2>
             <div id="player-hand" class="hand"></div>
-            <p id="player-score" class="score">Score: 0</p>
+            <p id="player-score" class="score">0</p>
         </div>
         <div class="action-buttons">
-            <button id="start">Nouvelle Partie</button>
-            <button id="hit" disabled>Prendre une carte</button>
-            <button id="stand" disabled>Rester</button>
+            <input type="checkbox" id="auto">
+            <button id="start">New Game</button>
+            <button id="hit" style="display: none;">Hit</button>
+            <button id="stand" style="display: none;">Stand</button>
+            <button id="double" style="display: none;">Double Down</button>
+            <button id="split" style="display: none;">Split</button>
+            <button id="insurance" style="display: none;">Insurance</button>
         </div>
-    </div>
+    </div>  
 
     <script src="game.js"></script>
 </body>
-
 </html>

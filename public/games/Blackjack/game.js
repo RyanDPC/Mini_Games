@@ -1,10 +1,9 @@
-const suits = ['carreau', 'coeur', 'pique', 'trefle'];
+const suits = ['diamonds', 'hearts', 'spades', 'clubs'];
 const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
 let playerHand = [];
 let dealerHand = [];
 let deck = [];
-let gameOver = false;
 
 const playerHandElement = document.getElementById('player-hand');
 const dealerHandElement = document.getElementById('dealer-hand');
@@ -12,13 +11,20 @@ const playerScoreElement = document.getElementById('player-score');
 const dealerScoreElement = document.getElementById('dealer-score');
 const startButton = document.getElementById('start');
 const hitButton = document.getElementById('hit');
+const doubleButton = document.getElementById('double');
+const splitButton = document.getElementById('split');
+const insuranceButton = document.getElementById('insurance');
 const standButton = document.getElementById('stand');
+const autoCheckbox = document.getElementById('auto');
 const feedbackZone = document.getElementById('feedback-zone');
 
 document.addEventListener('DOMContentLoaded', () => {
   startButton.addEventListener('click', startNewGame);
   hitButton.addEventListener('click', playerHit);
   standButton.addEventListener('click', playerStand);
+  doubleButton.addEventListener('click', playerDouble);
+  splitButton.addEventListener('click', playerSplit);
+  insuranceButton.addEventListener('click', playerInsurance);
 });
 
 function createDeck() {
@@ -47,14 +53,18 @@ function convertCardValueToNumber(value) {
 
 function dealCard(hand, playerElement, isFaceUp = true) {
   const card = deck.pop();
+  playerElement.classList.add('shift-card');
   hand.push(card);
+  playerElement.addEventListener('animationend', () => {
+    playerElement.classList.remove('shift-card');
+  });   
   card.faceUp = isFaceUp;
   
   const cardElement = document.createElement('div');
   cardElement.classList.add('cards');
   cardElement.style.backgroundImage = isFaceUp
-    ? `url('cards/${card.suit}/${convertCardValueToNumber(card.value)}.png')`
-    : "url('cards/back.png')";
+    ? `url('images/cards/${card.suit}/${convertCardValueToNumber(card.value)}.png')`
+    : "url('images/cards/back.png')";
   
   playerElement.appendChild(cardElement);
   
@@ -64,7 +74,6 @@ function dealCard(hand, playerElement, isFaceUp = true) {
 function startNewGame() {
   playerHand = [];
   dealerHand = [];
-  gameOver = false;
   deck = shuffle(createDeck());
   playerHandElement.innerHTML = '';
   dealerHandElement.innerHTML = '';
@@ -74,37 +83,81 @@ function startNewGame() {
 
   dealCard(playerHand, playerHandElement);
   dealCard(playerHand, playerHandElement);
-
   dealCard(dealerHand, dealerHandElement);
   dealCard(dealerHand, dealerHandElement, false);
 
-  hitButton.disabled = false;
-  standButton.disabled = false;
-  startButton.disabled = true;
+  startButton.style.display = 'none';
+  hitButton.style.display = 'block';
+  standButton.style.display = 'block';
 
-  updateFeedback('La partie commence ! Bonne chance !');
+  if (calculateScore(playerHand) == 9 || calculateScore(playerHand) == 10 || calculateScore(playerHand) == 11) {
+    doubleButton.style.display = 'block';
+  } else {
+    doubleButton.style.display = 'none';
+  }
+
+  if (parseInt(playerHand[0].value, 10) === parseInt(playerHand[1].value, 10)) {
+    splitButton.style.display = 'block';
+  } else {
+    splitButton.style.display = 'none';
+  }
+
+  if (dealerHand[0].value === "A") {
+    insuranceButton.style.display = 'block';
+  } else {
+    insuranceButton.style.display = 'none';
+  }
 }
 
 function revealDealerCards() {
-  dealerHandElement.innerHTML = '';
-  dealerHand.forEach((card) => {
+  dealerHand.forEach((card, index) => {
     if (!card.faceUp) {
       card.faceUp = true;
+
+      const cardElement = dealerHandElement.children[index] || document.createElement('div');
+      cardElement.classList.add('cards');
+      cardElement.classList.add('flip');
+
+      setTimeout(() => {  
+        cardElement.style.backgroundImage = `url('images/cards/${card.suit}/${convertCardValueToNumber(card.value)}.png')`;
+
+        if (!dealerHandElement.contains(cardElement)) {
+          dealerHandElement.appendChild(cardElement);
+        }
+      }, 150);
     }
-    const cardElement = document.createElement('div');
-    cardElement.classList.add('cards');
-    cardElement.style.backgroundImage = `url('cards/${card.suit}/${convertCardValueToNumber(card.value)}.png')`;
-    dealerHandElement.appendChild(cardElement);
   });
 
   updateScore(dealerHand, dealerScoreElement);
 }
 
+function playerDouble() {
+  dealCard(playerHand, playerHandElement);
+  hitButton.style.display = 'none';
+  standButton.style.display = 'none';
+  doubleButton.style.display = 'none';
+  splitButton.style.display = 'none';
+  insuranceButton.style.display = 'none';
+
+  setTimeout(() => {  
+    playerStand()
+  }, 500);
+}
+
+function playerSplit() { // Work in progress
+
+}
+
+function playerInsurance() { // Work in progress
+
+}
+
 function playerStand() {
-  if (gameOver) return;
-  updateFeedback('Le croupier joue...', 'info');
-  hitButton.disabled = true;
-  standButton.disabled = true;
+  hitButton.style.display = 'none';
+  standButton.style.display = 'none';
+  doubleButton.style.display = 'none';
+  splitButton.style.display = 'none';
+  insuranceButton.style.display = 'none';
 
   revealDealerCards(); 
 
@@ -114,23 +167,24 @@ function playerStand() {
 }
 
 function playerHit() {
-  if (gameOver) return;
   dealCard(playerHand, playerHandElement);
+  doubleButton.style.display = 'none';
+  splitButton.style.display = 'none';
 
   const playerScore = calculateScore(playerHand);
   if (playerScore > 21) {
-    updateFeedback('Vous avez dépassé 21 !', 'lose');
     endGame();
   }
 }
 
 function dealerHit() {
   const dealerScore = calculateScore(dealerHand);
-  if (dealerScore < 17) {
+  const playerScore = calculateScore(playerHand);
+  if (dealerScore < 17 && dealerScore < playerScore) {
     dealCard(dealerHand, dealerHandElement);
     setTimeout(() => {
       dealerHit();
-    }, 1000);
+    }, 500);
   } else {
     endGame();
   }
@@ -169,30 +223,20 @@ function updateScore(hand, scoreElement) {
     score = calculateScore(hand);
   }
 
-  scoreElement.textContent = `Score: ${score}`;
-}
-
-function updateFeedback(message, type = '') {
-  feedbackZone.textContent = message;
-  feedbackZone.className = `feedback ${type}`;
+  scoreElement.textContent = `${score}`;
 }
 
 function endGame() {
-  gameOver = true;
-  hitButton.disabled = true;
-  standButton.disabled = true;
-  startButton.disabled = false;
-
-  const playerScore = calculateScore(playerHand);
-  const dealerScore = calculateScore(dealerHand);
-
-  if (playerScore > 21) {
-    updateFeedback('Vous avez dépassé 21 !', 'lose');
-  } else if (dealerScore > 21 || playerScore > dealerScore) {
-    updateFeedback('Vous avez gagné !', 'win');
-  } else if (dealerScore === playerScore) {
-    updateFeedback('Égalité', 'tie');
+  if (autoCheckbox.checked) {
+    setTimeout(() => {
+      startNewGame();
+    }, 500);
   } else {
-    updateFeedback('Le croupier a gagné', 'lose');
+    startButton.style.display = 'block'; 
   }
+  hitButton.style.display = 'none';
+  standButton.style.display = 'none';
+  doubleButton.style.display = 'none';
+  splitButton.style.display = 'none';
+  insuranceButton.style.display = 'none';
 }
