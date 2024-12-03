@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add event listener for redirect
             gameCard.addEventListener('click', () => {
                 // Redirect to the game's specific page
-                window.location.href = `/games/${game.name}/index.html`;
+                window.location.href = `/games/${game.name}/index.ejs`;
             });
 
             // Append the card to the game list

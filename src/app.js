@@ -79,6 +79,7 @@ app.use(cors({
 // Configurer le moteur de template EJS
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../public/views'));
+app.set('games', path.join(__dirname, '../public/games'));
 
 // Servir les fichiers statiques
 app.use(express.static(path.join(__dirname, '../public')));
