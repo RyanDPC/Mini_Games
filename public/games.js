@@ -2,7 +2,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Variables DOM for the game list and search input
     const gameList = document.getElementById("game-list");
     const searchInput = document.getElementById("search");
-
     // Fetch the games list
     fetchGames();
 
@@ -15,6 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch("/api/games")
             .then((response) => response.json())
             .then((games) => {
+                if (!Array.isArray(games)) {
+                    console.error("La réponse du serveur n'est pas un tableau:", games);
+                    return;
+                }
+
                 // Filter games based on search value
                 const filteredGames = games.filter((game) =>
                     game.name.toLowerCase().includes(searchValue)
@@ -22,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 displayGames(filteredGames);
             })
             .catch((error) => {
-                console.error("Error searching for games:", error);
+                console.error("Erreur lors de la recherche des jeux:", error);
             });
     }
 
@@ -32,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gameList.innerHTML = "";
 
         if (games.length === 0) {
-            gameList.innerHTML = "<p>No games found.</p>";
+            gameList.innerHTML = "<p>Aucun jeu trouvé.</p>";
             return;
         }
 
@@ -43,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Game Image
             const gameImage = document.createElement('img');
-            gameImage.src = `/games/${game.name}/img.png`;  // Path to the game's image
+            gameImage.src = `/views/games/${game.name}/img.png`;  // Chemin mis à jour vers l'image
             gameImage.alt = game.name;
 
             // Game Title
@@ -57,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add event listener for redirect
             gameCard.addEventListener('click', () => {
                 // Redirect to the game's specific page
-                window.location.href = `/games/${game.name}/index.ejs`;
+                window.location.href = `/games/${game.name}`;
             });
 
             // Append the card to the game list
@@ -66,17 +70,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Fetch the list of games from the server
-  // Fetch the list of games from the server
-function fetchGames() {
-    fetch("/api/games")
-        .then((response) => response.json())
-        .then((games) => {
-            console.log("Games data fetched:", games); // Ajoutez cette ligne
-            displayGames(games);
-        })
-        .catch((error) => {
-            console.error("Error fetching games:", error);
-        });
-}
-
+    function fetchGames() {
+        fetch("/api/games")
+            .then((response) => response.json())
+            .then((games) => {
+                console.log("Données des jeux récupérées:", games);
+                if (!Array.isArray(games)) {
+                    console.error("Le serveur a retourné un objet au lieu d'un tableau. Voici la réponse :", games);
+                    return;
+                }
+                displayGames(games);
+            })
+            .catch((error) => {
+                console.error("Erreur lors de la récupération des jeux:", error);
+            });
+    }
 });

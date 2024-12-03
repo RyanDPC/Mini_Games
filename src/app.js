@@ -8,8 +8,9 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const cors = require('cors');
 const uuid = require('uuid'); // Utilisé pour générer des identifiants de session uniques
-require('dotenv').config()
+require('dotenv').config();
 
+// Vérifier si les secrets sont définis
 if (!process.env.JWT_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
     console.error('Erreur : Les variables JWT_SECRET ou REFRESH_TOKEN_SECRET ne sont pas définies.');
     process.exit(1); // Arrête l'application si les clés ne sont pas définies
@@ -29,41 +30,25 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            connectSrc: ["'self'", "https://localhost:4000"], // Autorise les connexions à votre API
+            connectSrc: ["'self'", "https://localhost:4000"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
             imgSrc: ["'self'", "data:"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
         },
     },
 }));
-app.post('/token/refresh', (req, res) => {
-    const refreshToken = req.cookies.refreshToken;
-
-    if (!refreshToken) {
-        return res.status(401).json({ message: 'Token de rafraîchissement manquant.' });
-    }
-
-    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ message: 'Token de rafraîchissement invalide ou expiré.' });
-        }
-
-        const newAccessToken = generateAccessToken({ id: user.id, username: user.username });
-        res.json({ accessToken: newAccessToken });
-    });
-});
 
 // Configuration des middlewares
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(session({
-    genid: (req) => uuid.v4(), // Générer un identifiant de session unique pour chaque utilisateur
-    secret: 'votre_clé_secrète', // Remplacez par une clé sécurisée
+    genid: (req) => uuid.v4(),
+    secret: 'votre_clé_secrète',
     resave: false,
     saveUninitialized: true,
     cookie: {
-        secure: true, // Utilisez true pour HTTPS
+        secure: true,
         httpOnly: true,
         sameSite: 'strict',
     },
@@ -79,10 +64,59 @@ app.use(cors({
 // Configurer le moteur de template EJS
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../public/views'));
-app.set('games', path.join(__dirname, '../public/games'));
 
 // Servir les fichiers statiques
 app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../public/views')));
+app.use(express.static(path.join(__dirname, '../public/views/games')));
+const gamesDirectory = path.join(__dirname, '../public/views/games');
+
+// Middleware pour créer des routes dynamiques pour les jeux
+// Route pour une page de jeu
+app.get('/games/:gameName', (req, res) => {
+    const gameName = req.params.gameName;
+    const gamePath = path.join(__dirname, '../public/views/games', gameName, 'index.ejs');
+
+    // Vérifier si le fichier de jeu existe
+    if (fs.existsSync(gamePath)) {
+        res.render(`games/${gameName}/index`, {
+            user: req.session.user,
+            isGamePage: true // Indiquer qu'il s'agit d'une page de jeu
+        });
+    } else {
+        res.status(404).send('Jeu non trouvé');
+    }
+});
+app.get('/api/games', (req, res) => {
+    fs.readdir(gamesDirectory, (err, folders) => {
+        if (err) {
+            console.error('Erreur lors de la lecture du répertoire des jeux:', err);
+            return res.status(500).json({ error: 'Erreur lors de la lecture du dossier des jeux' });
+        }
+
+        const games = [];
+
+        folders.forEach((folder) => {
+            const folderPath = path.join(gamesDirectory, folder);
+            if (fs.lstatSync(folderPath).isDirectory()) {
+                // Vérifiez la présence des fichiers requis (index.ejs, img.png, style.css)
+                const indexFile = path.join(folderPath, 'index.ejs');
+                const imgFile = path.join(folderPath, 'img.png');
+                const cssFile = path.join(folderPath, 'style.css');
+
+                if (fs.existsSync(indexFile) && fs.existsSync(imgFile) && fs.existsSync(cssFile)) {
+                    games.push({
+                        name: folder,
+                        path: `/games/${folder}`
+                    });
+                }
+            }
+        });
+
+        res.json(games);
+    });
+});
+
 
 // Importer les routes
 const userRoutes = require('./routes/userRoutes');
@@ -97,8 +131,9 @@ app.use('/api/games', gameRoutes);
 // Routes pour les pages principales
 app.get('/', (req, res) => {
     const user = req.session.user || null;
-    res.render('index', { user });
+    res.render('index', { user, isGamePage: false });
 });
+
 
 app.get('/login', (req, res) => {
     if (req.session.user) {
@@ -112,6 +147,10 @@ app.get('/register', (req, res) => {
         return res.redirect('/');
     }
     res.render('register');
+});
+app.use((req, res, next) => {
+    res.locals.user = req.session.user || null;
+    next();
 });
 
 // Route pour déconnexion

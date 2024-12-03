@@ -1,22 +1,58 @@
-
-<nav>
+<nav class="<%= isGamePage ? 'game-page-nav' : '' %>">
     <div class="logo-container">
         <img src="/assets/Logo.png" alt="Mini Games Store Logo" class="logo">
     </div>
-    <div class="search-bar">
+    <div class="search-bar" style="<%= isGamePage ? 'display: none;' : '' %>">
         <input type="search" id="search" placeholder="Rechercher un jeu...">
         <button id="search-btn"><i class="fas fa-search"></i></button>
     </div>
     <div class="user-info">
         <% if (user) { %>
             <div class="profile-section">
-                <div class="info"><p><%= user.username %></p>
-                    <button id="logout-btn">Déconnexion</button></div>
-                <div class="photo"><img src="<%= user.profile_pic %>" alt="Photo de profil" class="profile-pic"></div>
-                
+                <div class="info">
+                    <p><%= user.username %></p>
+                    <button id="logout-btn">Déconnexion</button>
+                </div>
+                <div class="photo">
+                    <img src="<%= user.profile_pic %>" alt="Photo de profil" class="profile-pic">
+                </div>
             </div>
         <% } else { %>
             <button id="open-login-btn">Se connecter</button>
         <% } %>        
     </div>
+    <!-- Bouton retour à l'accueil (visible seulement sur les pages de jeu) -->
+    <% if (isGamePage) { %>
+        <button id="back-home-btn">Retour à l'accueil</button>
+    <% } %>
 </nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Vérifier si le corps du document a l'attribut `data-page="game"`
+    if (document.body.dataset.page === "game") {
+        // Sélectionner la barre de recherche et la masquer
+        const searchBar = document.querySelector('.search-bar');
+        if (searchBar) {
+            searchBar.style.display = 'none';
+        }
+    }
+});
+    document.addEventListener('DOMContentLoaded', () => {
+        const backHomeBtn = document.getElementById('back-home-btn');
+
+        // Vérifie si l'URL contient '/games/' pour déterminer si l'utilisateur est sur une page de jeu
+        if (window.location.pathname.includes('/games/')) {
+            if (backHomeBtn) {
+                backHomeBtn.style.display = 'block'; // Afficher le bouton si l'utilisateur est sur une page de jeu
+            }
+        }
+
+        // Attacher un événement pour retourner à l'accueil lorsqu'on clique sur le bouton
+        if (backHomeBtn) {
+            backHomeBtn.addEventListener('click', () => {
+                window.location.href = '/';
+            });
+        }
+    });
+</script>

@@ -379,6 +379,24 @@ er-info button {
 .auth-container a:hover {
     color: #d1a837;
 }
+.back-to-home {
+    margin-left: 20px;
+}
+
+#back-home-btn {
+    background-color: #f4c542;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    color: #1a1d23;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+#back-home-btn:hover {
+    background-color: #e0b93a;
+}
 
 /* Responsive Design */
 @media (max-width: 1024px) {
