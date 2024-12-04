@@ -1,115 +1,170 @@
-// Importation des modules nécessaires
-import { showMainMenu, showLibrary, handleMenuInput, showPlayerSelection, getCurrentGameState} from './menu.js';  // Menu
-import { Player, getPlayerByType } from './player.js';  // Joueur
-import { Wave } from './wave.js';  // Vagues et spécialités
-import {gameOver, resetWave } from './gameReset.js';  // Réinitialisation du jeu
-import { Enemy } from './enemy.js';  // Ennemis
+// game.js
 
-// Canvas et contexte
-let canvas = document.getElementById('gameCanvas');
-let ctx = canvas.getContext('2d');
+import { checkPlayerEnemyCollision, checkBulletEnemyCollision, checkBulletPlayerCollision } from './collision.js';
+import { Player } from './player.js';
+import { Enemy, Scavenger, Brute, Shooter } from './enemy.js';
+import { Bullet, drawBullet } from './bullet.js';
 
-// Variables du jeu
-let gameState = getCurrentGameState();  // Etat initial du jeu
-let currentWave;  // Objet Wave pour la gestion des vagues
-let playerLives = 3;
+// Variables globales
+let canvas, ctx;
 let player;
+let enemies = [];
+let bullets = [];
 let keys = {};
-let lastTime = 0; // Temps de la dernière frame
 
-const targetFPS = 30; // Définir le nombre de FPS cible
-const interval = 1000 / targetFPS; // Temps entre chaque image (en millisecondes)
+// Initialisation du jeu
+// Initialisation du jeu
+function init() {
+    player = new Player('Player1', 100, 3, 20, 1500);
+    player.lives = 3;  // Ajouter 3 vies au joueur
+    canvas = document.getElementById('gameCanvas');
+    ctx = canvas.getContext('2d');
 
-// Fonction pour initialiser le jeu
-function initializeGame() {
-    player = new Player(canvas.width / 2, canvas.height / 2, 50, 50, "blue", 5);  // Création du joueur
-    currentWave = new Wave(1, canvas, player);  // Première vague
-    console.log("Game Initialized");
-}
-// Fonction principale de boucle du jeu
-function gameLoop(currentTime) {
-    const deltaTime = currentTime - lastTime;
-    if (deltaTime >= interval) {
-        lastTime = currentTime - (deltaTime % interval);
-        
-        // Logique de mise à jour et de dessin selon l'état du jeu
-        if (gameState === "play") {
-            updateGame(deltaTime);
-            drawGame();
-        } else {
-            handleMenu();  // Afficher le menu si le jeu n'est pas en cours
-        }
-    }
-    
-    // Appeler récursivement la boucle de jeu
+    // Créer le joueur
+    player = new Player('Player1', 100, 3, 20, 1500);
+
+    // Créer des ennemis de différents types
+    enemies.push(new Scavenger(100, 100, canvas));
+    enemies.push(new Brute(200, 200, canvas));
+    enemies.push(new Shooter(300, 300, canvas));
+
+    // Gestion des entrées clavier
+    window.addEventListener('keydown', (e) => keys[e.key] = true);
+    window.addEventListener('keyup', (e) => keys[e.key] = false);
+
+    // Lancer la boucle de jeu
     requestAnimationFrame(gameLoop);
 }
 
-// Fonction pour gérer les entrées clavier
-function handleInput(e) {
-    const key = e.key.toLowerCase();  // Convertir la touche en minuscule
-    keys[key] = e.type === "keydown";  // Détecter si la touche est enfoncée ou relâchée
+// Boucle de jeu principale
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
 }
 
-// Fonction pour vérifier si le joueur a perdu une vie (exemple avec les ennemis)
-function playerLostLife() {
-    return player.collidesWith(currentWave.enemies);  // Vérifier la collision avec les ennemis
-}
-
-// Mise à jour du mouvement du joueur
-function updateGame(deltaTime) {
-    player.move(keys, deltaTime / 1000);  // Mise à jour du mouvement du joueur avec deltaTime
-    currentWave.manageWave();  // Gérer la vague actuelle
+// Mise à jour des éléments du jeu
+function update() {
+    // Mettre à jour la position du joueur
+    player.move(keys);
     
-    // Vérification des collisions
-    if (playerLostLife()) {
-        playerLoseLife();  // Réduction de vie du joueur
+    // Empêcher le joueur de sortir du canvas
+    keepInBounds(player);
+
+   
+ // Mettre à jour les balles tirées par les ennemis
+ enemies.forEach(enemy => {
+    if (enemy instanceof Shooter && enemy.bullets) {
+        enemy.bullets.forEach((bullet, bulletIndex) => {
+            bullet.x += bullet.directionX;
+            bullet.y += bullet.directionY;
+            // Supprimer la balle si elle sort du canvas
+            if (!isInBounds(bullet)) {
+                enemy.bullets.splice(bulletIndex, 1);
+            }
+        });
+    }
+});
+    // Mettre à jour les balles
+    bullets.forEach((bullet, bulletIndex) => {
+        if (typeof bullet.update === 'function') {
+            bullet.update();
+            // Supprimer la balle si elle sort du canvas ou dépasse sa portée
+            if (!isInBounds(bullet) || bullet.distanceTraveled > bullet.range) {
+                bullets.splice(bulletIndex, 1);
+            }
+        }
+    });
+   // Mettre à jour les ennemis 
+   enemies.forEach(enemy => { 
+    if (enemy instanceof Shooter) { 
+        enemy.update(player, bullets, Date.now()); 
+    } else { enemy.update(player); } 
+        // Empêcher les ennemis de sortir du canvas
+        keepInBounds(enemy);
+    });
+    // Vérifier les collisions
+    checkPlayerEnemyCollision(player, enemies);
+    checkBulletEnemyCollision(bullets, enemies);
+    enemies.forEach(enemy => {
+        if (enemy instanceof Shooter && enemy.bullets) {
+            checkBulletPlayerCollision(enemy.bullets, player);
+        }
+    });
+     // Gérer la perte de vie du joueur
+     if (player.collided) {
+        player.lives -= 1;
+        player.collided = false;
+        console.log(`Le joueur a ${player.lives} vies restantes.`);
+        if (player.lives <= 0) {
+            console.log('Le joueur a perdu toutes ses vies. Réinitialisation du jeu.');
+            resetGame();
+        }
     }
 }
 
-// Dessiner le jeu
-function drawGame() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);  // Effacer le canvas
+// Dessiner les éléments du jeu
+function draw() {
+    // Effacer le canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Dessiner le joueur
     player.draw(ctx);
-    currentWave.draw();  // Dessiner les ennemis de la vague
 
-    // Afficher la barre de vie du joueur
-    ctx.fillStyle = "red";
-    ctx.fillRect(10, 10, playerLives * 20, 20);
+    // Vérifier et appliquer les spécialisations du joueur
+    player.checkSpecialities();
+    // Dessiner les ennemis
+    enemies.forEach(enemy => enemy.draw(ctx));
 
-    // Afficher la vague actuelle
-    ctx.fillStyle = "black";
-    ctx.font = "20px Arial";
-    ctx.fillText(`Wave: ${currentWave.waveNumber}`, canvas.width - 100, 30);
+    // Dessiner les balles
+    bullets.forEach(bullet => {
+        if (bullet && bullet.size > 0) {
+            drawBullet(ctx, bullet);
+        }
+    });
+     // Dessiner les balles tirées par les ennemis
+    enemies.forEach(enemy => {
+        if (enemy instanceof Shooter && enemy.bullets) {
+            enemy.bullets.forEach(bullet => {
+                drawBullet(ctx, bullet);
+            });
+        }
+    });
+}
+// Fonction pour réinitialiser le jeu
+function resetGame() {
+    player = new Player('Player1', 100, 3, 20, 1500);
+    player.lives = 3;
+    enemies = [];
+    bullets = [];
+    enemies.push(new Scavenger(100, 100, canvas));
+    enemies.push(new Brute(200, 200, canvas));
+    enemies.push(new Shooter(300, 300, canvas));
+    console.log('Jeu réinitialisé.');
+}
+// Fonction pour tirer un projectile
+function shootBullet() {
+    const bullet = new Bullet(player.x + player.width / 2 - 2.5, player.y - 10, -Math.PI / 2, 5, player.damage, 5, 'yellow', 500);
+    bullets.push(bullet);
+    console.log('Le tir a été fait');
+}
+// Fonction pour garder un objet dans les limites du canvas
+function keepInBounds(obj) {
+    obj.x = Math.max(0, Math.min(obj.x, canvas.width - obj.width));
+    obj.y = Math.max(0, Math.min(obj.y, canvas.height - obj.height));
 }
 
-// Fonction pour gérer le menu
-function handleMenu() {
-    if (gameState === "main") {
-        showMainMenu(ctx, canvas);
-    } else if (gameState === "library") {
-        showLibrary(ctx, canvas, currentWave.waveNumber);
-    } else if (gameState === "playerSelection") {
-        showPlayerSelection(ctx, canvas);
+// Fonction pour vérifier si un objet est dans les limites du canvas
+function isInBounds(obj) {
+    return obj.x >= 0 && obj.x + obj.size <= canvas.width && obj.y >= 0 && obj.y + obj.size <= canvas.height;
+}
+
+// Gestion des tirs du joueur
+window.addEventListener('keydown', (e) => {
+    if (e.key === ' ') {
+        shootBullet();
     }
-}
+});
 
-// Fonction de perte de vie du joueur
-function playerLoseLife() {
-    playerLives--;
-    if (playerLives <= 0) {
-        gameOver();  // Si le joueur n'a plus de vies, afficher la fin du jeu
-    } else {
-        resetWave();  // Réinitialiser la vague
-    }
-}
-
-// Démarrer le jeu
-export function startGame() {
-    gameState = "play";
-    playerLives = 3;
-    initializeGame();  // Initialisation du jeu
-    gameLoop();  // Lancer la boucle de jeu
-}
+// Lancer l'initialisation lorsque la page est chargée
+window.onload = init;

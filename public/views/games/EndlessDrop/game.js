@@ -1,3 +1,5 @@
+//mettre un systeme de temps et ajouter de la diff
+
 const container = document.getElementById('game-container');
     const player = document.getElementById('player');
     const canvas = document.getElementById('backgroundCanvas');

@@ -10,6 +10,8 @@ export class Bullet {
         this.range = range;  // Portée maximale
         this.isExplosive = isExplosive;  // Si le projectile est explosif
         this.distanceTraveled = 0;  // Distance parcourue par le projectile
+
+        console.log(`Bullet created at (${this.x}, ${this.y}) with range ${this.range}`);
     }
 
     // Met à jour la position du projectile
@@ -21,38 +23,22 @@ export class Bullet {
         this.y += deltaY;
         this.distanceTraveled += this.speed;
 
+        console.log(`Bullet updated to position (${this.x}, ${this.y}), distance traveled: ${this.distanceTraveled}`);
+
         // Vérifie si le projectile dépasse sa portée maximale
         if (this.distanceTraveled > this.range) {
+            console.log(`Bullet exceeded range of ${this.range}, destroying bullet.`);
             this.destroy();
         }
     }
-
-    // Dessine le projectile sur le canvas
-    draw(ctx) {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-    }
-
-    // Vérifie si le projectile touche un ennemi
-    checkCollision(enemies) {
-        enemies.forEach(enemy => {
-            // Calcul de la distance entre le projectile et l'ennemi
-            const dist = Math.hypot(this.x - enemy.x, this.y - enemy.y);
-
-            if (dist < this.size + enemy.size) {
-                this.handleHit(enemy);
-            }
-        });
-    }
-
     // Gère les effets de l'impact avec un ennemi
     handleHit(enemy) {
+        console.log(`Bullet hit enemy at (${enemy.x}, ${enemy.y}), dealing ${this.damage} damage`);
         enemy.takeDamage(this.damage);  // Applique les dégâts à l'ennemi
 
         // Si le projectile est explosif, exécute l'explosion
         if (this.isExplosive) {
+            console.log(`Bullet is explosive, triggering explosion`);
             this.explode(enemy);
         }
 
@@ -60,30 +46,34 @@ export class Bullet {
     }
 
     // Exécute l'explosion (si le projectile est explosif)
-    explode(enemy) {
-        console.log("Explosion déclenchée à", enemy.x, enemy.y);
+   // Méthode pour gérer l'explosion d'un projectile
+   explode(enemies) {
+    const explosionRadius = 50; // Rayon de l'explosion
+    const affectedEnemies = new Set();
+    enemies.forEach(enemy => {
+        const distance = Math.hypot(this.x - enemy.x, this.y - enemy.y);
+        if (distance < explosionRadius && !affectedEnemies.has(enemy)) {
+            const damage = this.calculateDamage(distance, explosionRadius);
+            enemy.takeDamage(damage);
+            affectedEnemies.add(enemy);
+        }
+    });
+}
+// Méthode pour calculer les dégâts en fonction de la distance
+calculateDamage(distance, radius) {
+    return Math.max(0, this.damage * (1 - distance / radius));
+}
 
-        // Utiliser un ensemble (Set) pour suivre les ennemis déjà affectés par cette explosion
-        const affectedEnemies = new Set();
-
-        // Recherche des ennemis à proximité
-        const affected = enemies.filter(e => Math.hypot(e.x - enemy.x, e.y - enemy.y) < this.size + 50);  // Rayon d'effet de 50
-        affected.forEach(affectedEnemy => {
-            // Éviter les effets multiples sur le même ennemi
-            if (!affectedEnemies.has(affectedEnemy)) {
-                affectedEnemies.add(affectedEnemy);  // Marque l'ennemi comme affecté
-                affectedEnemy.takeDamage(this.damage);  // Applique les dégâts à tous les ennemis dans la zone
-            }
-        });
-    }
 
     // Détruire la balle (ne plus l'afficher et l'enlever des projectiles en jeu)
     destroy() {
-        console.log("Balle détruite");
-        // Retirer cette balle du tableau des projectiles actifs
-        const index = activeProjectiles.indexOf(this);
-        if (index !== -1) {
-            activeProjectiles.splice(index, 1);  // Retirer le projectile de la liste
-        }
+        console.log(`Bullet destroyed at (${this.x}, ${this.y})`);
     }
+}
+export function drawBullet(ctx, bullet) {
+    ctx.fillStyle = bullet.color;
+    ctx.beginPath();
+    ctx.arc(bullet.x, bullet.y, bullet.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.closePath();
 }

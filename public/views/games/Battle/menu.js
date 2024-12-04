@@ -1,6 +1,7 @@
 import { getPlayerByType } from './player.js';  // Importer la fonction pour récupérer un joueur
 import { getWeapon } from './weapon.js';  // Importer la fonction pour récupérer une arme
-import {startGame } from './game.js';
+import { startGame } from './game.js';
+
 let currentGameState = "main";  // Valeur initiale : menu principal
 let selectedPlayer = null;  // Le joueur actuellement sélectionné
 let unlockedWeapons = [];  // Tableau pour suivre les armes débloquées
@@ -81,7 +82,7 @@ export function showPlayerSelection(ctx, canvas) {
 // Mettre à jour l'état du jeu en fonction de l'entrée
 export function handleMenuInput(e) {
     if (e.key === "1") {
-         startGame(); // Changer l'état pour démarrer le jeu
+        startGame(); // Changer l'état pour démarrer le jeu
     } else if (e.key === "2") {
         currentGameState = "library";  // Aller à la bibliothèque
     } else if (e.key === "3") {

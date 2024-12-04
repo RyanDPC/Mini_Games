@@ -11,7 +11,7 @@ export class Player {
         this.specialities = [];  // Liste des passifs du joueur
         this.maxHealth = health;  // Santé maximale (peut être augmentée par des passifs)
         this.ammo = 30;  // Munitions de départ
-        this.x = 100;  // Position initiale sur l'axe X
+        this.x = 150;  // Position initiale sur l'axe X
         this.y = 100;  // Position initiale sur l'axe Y
         this.isShielded = false;  // Si le joueur a un bouclier actif
         this.damageMultiplier = 1;  // Multiplicateur de dégâts (modifié par certains objets)
@@ -20,26 +20,9 @@ export class Player {
         this.width = 20; 
         this.height = 20;
     }
-    collidesWith(otherObject) {
-        // Vérifier si l'autre objet est un tableau d'ennemis ou un seul ennemi
-        if (Array.isArray(otherObject)) {
-            for (let i = 0; i < otherObject.length; i++) {
-                if (this.collidesWith(otherObject[i])) {
-                    return true;  // Collision avec un des ennemis
-                }
-            }
-            return false;
-        }
 
-        // Si l'autre objet est un seul ennemi
-        return this.x < otherObject.x + otherObject.width &&
-               this.x + this.width > otherObject.x &&
-               this.y < otherObject.y + otherObject.height &&
-               this.y + this.height > otherObject.y;
-    }
-
-     // Méthode pour appliquer un passif au joueur
-     applySpeciality(speciality) {
+    // Méthode pour appliquer un passif au joueur
+    applySpeciality(speciality) {
         speciality.effect(this);
     }
 
@@ -53,7 +36,7 @@ export class Player {
 
     // Méthode pour dessiner le joueur (sur le canvas par exemple)
     draw(ctx) {
-        ctx.fillStyle = 'blue';
+        ctx.fillStyle = 'yellow';
         ctx.fillRect(this.x, this.y, 20, 20);  // Dessine un carré pour représenter le joueur
     }
 
@@ -94,6 +77,7 @@ export const players = {
     sniper: new Player("Sniper", 80, 3, 30, 2500), // vitesse réaliste de 3
     medic: new Player("Medic", 120, 3, 12, 1800) // vitesse réaliste de 3
 };
+
 // Spécialités des joueurs
 
 // Warrior - Guerrier

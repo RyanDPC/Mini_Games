@@ -1,5 +1,5 @@
 // gameReset.js
-
+import { Wave } from './wave.js';  // Vagues et spécialités
 let currentWave = 1;  // Vague actuelle
 let playerLives = 3;   // Nombre de vies du joueur
 let isGameOver = false;  // Si le jeu est terminé ou non
@@ -26,7 +26,7 @@ export function gameOver() {
 export function resetGame() {
     playerLives = 3;  // Remettre les vies à 3
     currentWave = 1;  // Remettre la vague à la 1ère
-    enemies = spawnEnemiesForWave(currentWave);  // Générer les ennemis pour la première vague
+    enemies = currentWave.spawnEnemies;  // Générer les ennemis pour la première vague
     player = new Player(canvas.width / 2, canvas.height / 2, 50, 50, "blue", 5);  // Réinitialiser le joueur
     gameState = "main";   // Réinitialiser l'état du jeu
     console.log("Game has been reset. Ready for a new game!");
