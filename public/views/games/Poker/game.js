@@ -1,5 +1,8 @@
+// Import necessary modules
+const db = require('../../database');
+const socket = io();
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", async function() {
     console.log("DOM content loaded.");
 
     let playerBalance = parseInt(document.getElementById('player-balance').dataset.tokens, 10);
@@ -66,7 +69,91 @@ document.addEventListener('DOMContentLoaded', () => {
         cardElement.appendChild(cardImage);
         container.appendChild(cardElement);
     }
+    document.addEventListener("DOMContentLoaded", function() {
+        // Show only the players that are in the game (max 8 players)
+        const gamePlayers = <%= JSON.stringify(game.players) %>;
+        gamePlayers.forEach((player, index) => {
+            if (index < 8) {
+                document.getElementById(`player-${index + 1}`).style.display = 'block';
+            }
+        });
+        document.querySelector('.dealer-area').style.display = 'block';
+        document.querySelector('.community-cards-area').style.display = 'block';
 
+        // Help button functionality
+        const helpButton = document.getElementById('help-button');
+        const helpPopup = document.getElementById('help-popup');
+        const closeHelp = document.getElementById('close-help');
+
+        helpButton.addEventListener('click', function() {
+            helpPopup.style.display = 'block';
+        });
+
+        closeHelp.addEventListener('click', function() {
+            helpPopup.style.display = 'none';
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target === helpPopup) {
+                helpPopup.style.display = 'none';
+            }
+        });
+
+        // Rules button functionality
+        const rulesButton = document.getElementById('rules-button');
+        const rulesPopup = document.getElementById('rules-popup');
+        const closeRules = document.getElementById('close-rules');
+
+        rulesButton.addEventListener('click', function() {
+            rulesPopup.style.display = 'block';
+        });
+
+        closeRules.addEventListener('click', function() {
+            rulesPopup.style.display = 'none';
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target === rulesPopup) {
+                rulesPopup.style.display = 'none';
+            }
+        });
+
+        // Update current turn indicator
+        function updateCurrentTurn(playerName) {
+            document.getElementById('current-player').textContent = playerName;
+        }
+
+        // Add notifications for player actions
+        function addNotification(message) {
+            const notificationArea = document.getElementById('notifications-area');
+            const notification = document.createElement('p');
+            notification.textContent = message;
+            notificationArea.appendChild(notification);
+            setTimeout(() => {
+                notificationArea.removeChild(notification);
+            }, 5000); // Remove the notification after 5 seconds
+        }
+
+        // Example usage of notifications and current turn
+        addNotification('<%= game.players[parseInt(RegExp.$1) - 1].username %> has raised by $2 tokens');
+        updateCurrentTurn('<%= game.players[parseInt(RegExp.$1) - 1].username %>');
+
+        // Update results after each hand
+        function updateResults(results) {
+            const resultsArea = document.getElementById('results-area');
+            const resultsLog = document.getElementById('results-log');
+            resultsLog.innerHTML = ''; // Clear previous results
+            results.forEach(result => {
+                const resultElement = document.createElement('p');
+                resultElement.textContent = result;
+                resultsLog.appendChild(resultElement);
+            });
+            resultsArea.style.display = 'block';
+        }
+
+        // Example usage of results update
+        updateResults(['<%= game.players[parseInt(RegExp.$1) - 1].username %> won $2 tokens', '<%= game.players[parseInt(RegExp.$3) - 1].username %> lost $4 tokens']);
+    });
     function startGame() {
         console.log("Starting game...");
 

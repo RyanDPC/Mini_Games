@@ -25,10 +25,16 @@ function generateFood(box, canvas) {
  * est déterminée par la taille d'une case (box) sur la grille.
  *
  * @param {{x: number, y: number}} food - Un objet contenant les coordonnées `x` et `y` où la nourriture doit être dessinée.
- */
-function drawFood(food) {
-  // Utilise la fonction DrawTile pour dessiner la nourriture en rouge à la position spécifiée.
-  DrawTile(food.x, food.y, "red");
+ */   const foodTexture = new Image();
+      foodTexture.src ="apple.png";
+function drawFood(food,ctx,box) {
+  if (foodTexture.complete) {
+    // Dessiner la texture de la nourriture si elle est prête
+    ctx.drawImage(foodTexture, food.x, food.y, box, box);
+  } else {
+    // Si l'image n'est pas encore chargée, on peut dessiner un carré rouge temporaire
+    DrawTile(ctx, food.x, food.y, "red");
+  }
 }
 
 export { generateFood, drawFood };

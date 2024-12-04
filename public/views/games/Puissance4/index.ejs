@@ -5,16 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puissance 4</title>
-    <link rel="stylesheet" href="puissance4.css">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../../style.css">
 </head>
 
 <body>
-    <%- include('header') %> <!-- Inclure le fichier header.ejs -->
+    <%- include('../../header') %> <!-- Inclure le fichier header.ejs -->
     <h1>Puissance 4</h1>
     <div id="game"></div>
     <div id="message" style="font-size: 2em; color: red; text-align: center; margin-top: 20px;"></div>
     <button id="resetButton">Recommencer</button>
-    <script src="puissance4.js"></script>
+    <script src="game.js"></script>
 </body>
 
 </html>

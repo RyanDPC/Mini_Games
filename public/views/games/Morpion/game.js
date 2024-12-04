@@ -12,14 +12,14 @@ const winningConditions = [
 ];
 
 // Messages
-const winningMessage = () => `Le joueur ${currentPlayer} a gagné !`;
+const winningMessage = () => `Le joueur ${currentPlayer} a gagne !`;
 const drawMessage = () => `Match nul !`;
 const currentPlayerTurn = () => `C'est le tour du joueur ${currentPlayer}`;
 
 // Initialisation du statut
 statusDisplay.innerHTML = currentPlayerTurn();
 
-// Fonction pour gérer les clics
+// Fonction pour gï¿½rer les clics
 function handleCellClick(event) {
     const clickedCell = event.target;
     const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
@@ -28,15 +28,15 @@ function handleCellClick(event) {
         return;
     }
 
-    // Mise à jour de la case et affichage
+    // Mise ï¿½ jour de la case et affichage
     board[clickedCellIndex] = currentPlayer;
     clickedCell.innerHTML = currentPlayer;
 
-    // Vérification du résultat
+    // Vï¿½rification du rï¿½sultat
     handleResultValidation();
 }
 
-// Vérifie si le jeu est gagné ou si c'est un nul
+// Vï¿½rifie si le jeu est gagnï¿½ ou si c'est un nul
 function handleResultValidation() {
     let roundWon = false;
 
@@ -54,7 +54,7 @@ function handleResultValidation() {
         return;
     }
 
-    // Vérifie s'il y a un nul
+    // Vï¿½rifie s'il y a un nul
     if (!board.includes("")) {
         statusDisplay.innerHTML = drawMessage();
         isGameActive = false;
@@ -66,7 +66,7 @@ function handleResultValidation() {
     statusDisplay.innerHTML = currentPlayerTurn();
 }
 
-// Réinitialise le jeu
+// Rï¿½initialise le jeu
 function restartGame() {
     board = ["", "", "", "", "", "", "", "", ""];
     isGameActive = true;
@@ -74,6 +74,8 @@ function restartGame() {
     statusDisplay.innerHTML = currentPlayerTurn();
     document.querySelectorAll('.cell').forEach(cell => cell.innerHTML = "");
 }
-
-// Ajoute l'événement de clic à chaque case
+document.getElementById('restartButton').addEventListener('click', function() {
+    restartGame();
+});
+// Ajoute l'ï¿½vï¿½nement de clic ï¿½ chaque case
 document.querySelectorAll('.cell').forEach(cell => cell.addEventListener('click', handleCellClick));

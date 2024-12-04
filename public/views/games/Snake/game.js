@@ -18,6 +18,7 @@ let lastTime = 0; // Temps de la dernière mise à jour
 let direction = "RIGHT"; // Direction initiale du serpent
 let score = 0; // Score initial
 let isPaused = false; // Indique si le jeu est en pause
+let isGameOver = false;
 
   startGame(); // Démarre le jeu
 
@@ -32,13 +33,6 @@ export function DrawTile(x, y, color) {
   ctx.fillStyle = color; // Définit la couleur de remplissage
   ctx.fillRect(x, y, box, box); // Dessine un rectangle de taille `box`
 }
-
-// Ajoute un écouteur d'événements pour détecter les touches appuyées
-document.addEventListener("keydown", (event) => {
-  // Met à jour la direction du serpent en fonction de la touche pressée
-  direction = handleDirectionChange(event, direction);
-});
-
 /**
  * Initialise les variables et démarre le jeu.
  */
@@ -47,8 +41,11 @@ function startGame() {
   food = generateFood(box, canvas); // Génère la nourriture à une position aléatoire
   score = 0; // Réinitialise le score
   direction = "RIGHT"; // Réinitialise la direction initiale
+  gameSpeed = 400;
+  lastTime = 0;
   scoreBoard.textContent = score;
   isPaused = false;
+  isGameOver = false;
   // Démarre la boucle de mise à jour
   startTimer();
   update();
@@ -81,10 +78,10 @@ document.addEventListener("keydown", (event) => {
  * @param {number} currentTime - Temps actuel en millisecondes, fourni par `requestAnimationFrame`.
  */
 function update(currentTime) {
-  if (isPaused) return;
+  if (isPaused || isGameOver) return;
   // Vérifie si le délai entre les mises à jour n'est pas encore écoulé
   if (currentTime - lastTime < gameSpeed) {
-    requestAnimationFrame(update); // Continue d'attendre la prochaine mise à jour
+    animationFrameId = requestAnimationFrame(update); // Continue d'attendre la prochaine mise à jour
     return;
   }
 
@@ -99,8 +96,9 @@ function update(currentTime) {
   // Vérifie si le serpent mange la nourriture
   if (checkFoodCollision(snake[0], food)) {
     score++; // Incrémente le score
-    if(gameSpeed >= 50)
-    gameSpeed -= 10;
+    if(gameSpeed > 50){    
+      gameSpeed -= 20;}
+
     scoreBoard.textContent = score; // Met à jour le texte affiché
     food = generateFood( box, canvas); // Génère une nouvelle nourriture
   } else {
@@ -109,12 +107,13 @@ function update(currentTime) {
   // Vérifie les collisions : avec les murs ou le corps du serpent
   if (checkCollision(head, snake) || checkWallCollision(head, canvas)) {
     cancelAnimationFrame(animationFrameId); // Arrête l'animation
+    isGameOver = true;
     drawGameOverMenu(canvas, ctx, score, restartGame);
     return;
   }
   updateTimer();
   draw(); // Dessine l'état actuel du jeu
-  requestAnimationFrame(update); // Demande la prochaine mise à jour
+  animationFrameId = requestAnimationFrame(update); // Demande la prochaine mise à jour
 }
 
 
@@ -126,9 +125,9 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Dessine le serpent
-  drawSnake(snake);
+  drawSnake(ctx,snake, box);
 
   // Dessine la nourriture
-  drawFood(food);
+  drawFood(food,ctx,box);
   drawTimer(canvas, ctx);
 }

@@ -62,15 +62,18 @@ function moveSnake(snake, direction, box) {
  * @param {CanvasRenderingContext2D} ctx - Le contexte de rendu 2D du canvas utilisé pour dessiner.
  * @param {Array<{x: number, y: number}>} snake - Un tableau représentant le serpent, où chaque élément est un segment avec des coordonnées `x` et `y`.
  * @param {number} box - La taille d'une case de la grille en pixels, utilisée pour déterminer la taille de chaque segment du serpent.
- */
-function drawSnake(snake) {
+ */   const snakeTexture = new Image();
+      snakeTexture.src ="snake.jpg";
+
+function drawSnake(ctx, snake, box) {
   // A compléter
-  for (let i = 0; i < snake.length; i++){
-    if(i=== 0 ){
+ for (let i = 0; i < snake.length; i++) {
+    if (i === 0) {
+      // La tête du serpent, vous pouvez la dessiner différemment si souhaité
       DrawTile(snake[i].x, snake[i].y, "green");
-    }
-    else{
-      DrawTile(snake[i].x, snake[i].y, "lightgreen");
+    } else {
+      // Dessiner la texture pour chaque segment du corps
+      ctx.drawImage(snakeTexture, snake[i].x, snake[i].y, box, box);
     }
   }
   
