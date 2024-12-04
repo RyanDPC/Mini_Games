@@ -79,7 +79,7 @@ function renderBoard() {
         cellDiv.classList.add('revealed');
         if (cell.mine) {
           const img = document.createElement('img');
-          img.src = '../../Assets/images/mine.png';
+          img.src = 'mine.png';
           img.alt = 'Mine';
           img.classList.add('icon');
           cellDiv.appendChild(img);
@@ -88,7 +88,7 @@ function renderBoard() {
         }
       } else if (cell.flag) {
         const img = document.createElement('img');
-        img.src = '../../Assets/images/flag.png';
+        img.src = 'flag.png';
         img.alt = 'Flag';
         img.classList.add('icon');
         cellDiv.appendChild(img);

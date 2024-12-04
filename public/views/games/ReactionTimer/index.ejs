@@ -4,10 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jeu de Réaction</title>
-  <link rel="stylesheet" href="../../css/reactiontimer.css">
+  <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../../style.css">
 </head>
 <body>
-  <%- include('header') %> <!-- Inclure le fichier header.ejs -->
+  <%- include('../../header') %> <!-- Inclure le fichier header.ejs -->
   <h1>Testez votre temps de réaction</h1>
   <p>Cliquez sur le carré dès qu'il devient vert !</p>
   <div class="click-area"></div>
@@ -17,6 +19,6 @@
     <p>Temps Moyen: <span id="average-time">N/A</span> ms</p>
     <p>Tentatives: <span id="attempts">0</span></p>
   </div>
-  <script src="reactiontimer.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>

@@ -63,8 +63,8 @@ function dealCard(hand, playerElement, isFaceUp = true) {
   const cardElement = document.createElement('div');
   cardElement.classList.add('cards');
   cardElement.style.backgroundImage = isFaceUp
-    ? `url('images/cards/${card.suit}/${convertCardValueToNumber(card.value)}.png')`
-    : "url('images/cards/back.png')";
+    ? `url('cards/${card.suit}/${convertCardValueToNumber(card.value)}.png')`
+    : "url('cards/back.png')";
   
   playerElement.appendChild(cardElement);
   
@@ -119,7 +119,7 @@ function revealDealerCards() {
       cardElement.classList.add('flip');
 
       setTimeout(() => {  
-        cardElement.style.backgroundImage = `url('images/cards/${card.suit}/${convertCardValueToNumber(card.value)}.png')`;
+        cardElement.style.backgroundImage = `url('cards/${card.suit}/${convertCardValueToNumber(card.value)}.png')`;
 
         if (!dealerHandElement.contains(cardElement)) {
           dealerHandElement.appendChild(cardElement);
