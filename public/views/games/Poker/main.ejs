@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Game</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body>
+    <%- include('../../header') %>
+    <div class="game-container">
+        <div class="dealer-area" style="display: none;">
+            <h3>Dealer's Hand:</h3>
+            <div id="dealer-hand"></div>
+        </div>
+        <div class="community-cards-area" style="display: none;">
+            <div id="community-cards" class="community-cards"></div>
+        </div>
+        <div class="player-area" id="player-1" style="display: none;">
+            <div class="player-info">
+                <h3><%= user.username %>'s Hand:</h3>
+                <div id="player-hand"></div>
+                <p>Your Balance: <span id="player-balance" data-user-id="<%= user.id %>" data-tokens="<%= user.tokens %>"><%= user.tokens %></span></p>
+                <div class="player-chips" id="player-chips-<%= user.id %>">
+                    <img src="/images/chips.png" alt="Player Chips" class="chips-image">
+                    <p>Chips: <span><%= user.tokens %></span></p>
+                </div>
+            </div>
+        </div>
+        <div class="players-area">
+            <% for (let i = 1; i <= 7; i++) { %>
+                <% if (i < game.players.length && game.players[i].id !== user.id) { %>
+                    <div class="opponent-area" id="player-<%= i + 1 %>" style="display: none;">
+                        <div class="player-info">
+                            <h3><%= game.players[i].username %>'s Hand:</h3>
+                            <div id="opponent-<%= i + 1 %>-hand"></div>
+                            <p>Balance: <%= game.players[i].balance %></p>
+                            <div class="player-chips" id="player-chips-<%= game.players[i].id %>">
+                                <img src="/images/chips.png" alt="Player Chips" class="chips-image">
+                                <p>Chips: <span><%= game.players[i].balance %></span></p>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            <% } %>
+        </div>
+        <div class="action-buttons">
+            <button id="bet-button">Bet</button>
+            <button id="fold-button">Fold</button>
+            <button id="call-button">Call</button>
+            <button id="check-button">Check</button>
+            <button id="raise-button">Raise</button>
+            <button id="all-in-button">All In</button>
+            <input type="number" id="bet-amount" min="10" value="10" />
+            <button id="help-button">Help</button>
+            <button id="rules-button">Game Rules</button>
+        </div>
+        <div class="current-bet-area">
+            <p>Current Bet: <span id="current-bet">0</span> tokens</p>
+        </div>
+        <div class="action-history">
+            <h3>Action History</h3>
+            <div id="history-log"></div>
+        </div>
+        <div class="current-turn">
+            <p>Current Turn: <span id="current-player"></span></p>
+        </div>
+        <div class="notifications-area" id="notifications-area"></div>
+        <div class="results-area" id="results-area" style="display: none;">
+            <h3>Results:</h3>
+            <div id="results-log"></div>
+        </div>
+        <div class="spectator-info" id="spectator-info" style="display: none;">
+            <h3>You're in Spectator Mode</h3>
+            <p>Watch the game unfold in real-time.</p>
+        </div>
+    </div>
+    <div id="help-popup" class="help-popup" style="display: none;">
+        <div class="help-content">
+            <span id="close-help" class="close-help">&times;</span>
+            <img src="/images/poker_combos.png" alt="Poker Combos">
+        </div>
+    </div>
+    <div id="rules-popup" class="rules-popup" style="display: none;">
+        <div class="rules-content">
+            <span id="close-rules" class="close-rules">&times;</span>
+            <h3>Poker Game Rules</h3>
+            <p>Some detailed rules about how to play poker...</p>
+        </div>
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Show only the players that are in the game (max 8 players)
+            const gamePlayers = <%= JSON.stringify(game.players) %>;
+            gamePlayers.forEach((player, index) => {
+                if (index < 8) {
+                    document.getElementById(`player-${index + 1}`).style.display = 'block';
+                }
+            });
+            document.querySelector('.dealer-area').style.display = 'block';
+            document.querySelector('.community-cards-area').style.display = 'block';
+
+            // Help button functionality
+            const helpButton = document.getElementById('help-button');
+            const helpPopup = document.getElementById('help-popup');
+            const closeHelp = document.getElementById('close-help');
+
+            helpButton.addEventListener('click', function() {
+                helpPopup.style.display = 'block';
+            });
+
+            closeHelp.addEventListener('click', function() {
+                helpPopup.style.display = 'none';
+            });
+
+            window.addEventListener('click', function(event) {
+                if (event.target === helpPopup) {
+                    helpPopup.style.display = 'none';
+                }
+            });
+
+            // Rules button functionality
+            const rulesButton = document.getElementById('rules-button');
+            const rulesPopup = document.getElementById('rules-popup');
+            const closeRules = document.getElementById('close-rules');
+
+            rulesButton.addEventListener('click', function() {
+                rulesPopup.style.display = 'block';
+            });
+
+            closeRules.addEventListener('click', function() {
+                rulesPopup.style.display = 'none';
+            });
+
+            window.addEventListener('click', function(event) {
+                if (event.target === rulesPopup) {
+                    rulesPopup.style.display = 'none';
+                }
+            });
+
+            // Update current turn indicator
+            function updateCurrentTurn(playerName) {
+                document.getElementById('current-player').textContent = playerName;
+            }
+
+            // Add notifications for player actions
+            function addNotification(message) {
+                const notificationArea = document.getElementById('notifications-area');
+                const notification = document.createElement('p');
+                notification.textContent = message;
+                notificationArea.appendChild(notification);
+                setTimeout(() => {
+                    notificationArea.removeChild(notification);
+                }, 5000); // Remove the notification after 5 seconds
+            }
+
+            // Example usage of notifications and current turn
+            addNotification('<%= game.players[parseInt(RegExp.$1) - 1].username %> has raised by $2 tokens');
+            updateCurrentTurn('<%= game.players[parseInt(RegExp.$1) - 1].username %>');
+
+            // Update results after each hand
+            function updateResults(results) {
+                const resultsArea = document.getElementById('results-area');
+                const resultsLog = document.getElementById('results-log');
+                resultsLog.innerHTML = ''; // Clear previous results
+                results.forEach(result => {
+                    const resultElement = document.createElement('p');
+                    resultElement.textContent = result;
+                    resultsLog.appendChild(resultElement);
+                });
+                resultsArea.style.display = 'block';
+            }
+
+            // Example usage of results update
+            updateResults(['<%= game.players[parseInt(RegExp.$1) - 1].username %> won $2 tokens', '<%= game.players[parseInt(RegExp.$3) - 1].username %> lost $4 tokens']);
+        });
+    </script>
+    <script src="/views/games/Poker/game.js"></script>
+</body>
+</html>

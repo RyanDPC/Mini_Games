@@ -40,14 +40,15 @@ exports.getUserById = (id) => {
 };
 
 // Mettre à jour les tokens d'un utilisateur
-exports.updateTokens = (userId, newTokens) => {
+exports.updateTokens = (id, newTokens) => {
     return new Promise((resolve, reject) => {
         const query = 'UPDATE users SET tokens = ? WHERE id = ?';
-        db.run(query, [newTokens, userId], function (err) {
+        db.run(query, [newTokens, id], function (err) {
             if (err) {
                 return reject(err);
             }
-            resolve({ userId, newTokens });
+            resolve({ userId: id, newTokens });
         });
     });
 };
+

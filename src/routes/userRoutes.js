@@ -1,3 +1,4 @@
+// Importer les modules nécessaires
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
@@ -17,5 +18,8 @@ router.post('/logout', userController.logout);
 
 // Route pour rechercher des utilisateurs
 router.get('/search', userController.searchUsers);
+
+// Route pour mettre à jour les jetons après une mise
+router.post('/update-tokens', auth.authenticateToken, userController.updateTokens);
 
 module.exports = router;

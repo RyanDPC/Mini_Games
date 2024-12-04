@@ -141,9 +141,52 @@ exports.searchUsers = (req, res) => {
         res.json({ users });
     });
 };
+
+// Mettre à jour les jetons d'un utilisateur
+exports.updateTokens = async (req, res) => {
+    const { userId, betAmount } = req.body;
+
+    console.log("Data received in updateTokens:", req.body);
+
+    // Vérifier les données
+    if (!userId || betAmount == null) {
+        console.error("Missing userId or betAmount. Received:", req.body);
+        return res.status(400).json({ message: 'L\'ID de l\'utilisateur et le montant de la mise sont requis.' });
+    }
+
+    // Convertir userId en nombre pour comparer avec session.user.id
+    const userIdNumber = parseInt(userId, 10);
+
+    // Vérifier que l'utilisateur connecté est celui qui fait la demande
+    if (req.session.user.id !== userIdNumber) {
+        console.error("User mismatch. Session user ID:", req.session.user.id, "Requested user ID:", userIdNumber);
+        return res.status(403).json({ message: 'Non autorisé à mettre à jour les jetons de cet utilisateur.' });
+    }
+
+    // Calculer le nouveau solde
+    const newTokens = req.session.user.tokens - betAmount;
+    if (newTokens < 0) {
+        console.error("Insufficient balance. Current tokens:", req.session.user.tokens, "Bet amount:", betAmount);
+        return res.status(400).json({ message: 'Solde insuffisant.' });
+    }
+
+    try {
+        await userModel.updateTokens(userIdNumber, newTokens);
+
+        // Mettre à jour la session utilisateur
+        req.session.user.tokens = newTokens;
+
+        res.json({ message: 'Mise à jour des jetons réussie.', newTokens });
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour des jetons :', error);
+        res.status(500).json({ message: 'Erreur lors de la mise à jour des jetons.' });
+    }
+};
+
+
 // Récupérer le profil utilisateur
 exports.getProfile = async (req, res) => {
-    const { userId } = req.user;
+    const userId = req.session.user?.id;
 
     try {
         const user = await userModel.getUserById(userId);

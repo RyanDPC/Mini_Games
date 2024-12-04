@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Lobby</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../../style.css">
+</head>
+<body data-user-id="<%= user.id %>" data-username="<%= user.username %>">
+    <%- include('../../header') %>
+    <div class="lobby-container">
+        <h1>Bienvenue dans le lobby de Poker</h1>
+        <p>Préparez-vous à jouer au poker contre d'autres joueurs !</p>
+        <a href="/games/Poker/main" class="start-game-button">Commencer le Jeu</a>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="lobby.js"></script>
+</body>
+</html>

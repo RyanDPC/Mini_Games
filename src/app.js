@@ -1,4 +1,5 @@
 // Importer les modules nécessaires
+const db = require('../config/db');
 const express = require('express');
 const https = require('https');
 const fs = require('fs');
@@ -7,13 +8,14 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const cors = require('cors');
-const uuid = require('uuid'); // Utilisé pour générer des identifiants de session uniques
+const uuid = require('uuid');
+const { Server } = require('socket.io');
 require('dotenv').config();
+require('events').EventEmitter.defaultMaxListeners = 20;
 
-// Vérifier si les secrets sont définis
 if (!process.env.JWT_SECRET || !process.env.REFRESH_TOKEN_SECRET) {
     console.error('Erreur : Les variables JWT_SECRET ou REFRESH_TOKEN_SECRET ne sont pas définies.');
-    process.exit(1); // Arrête l'application si les clés ne sont pas définies
+    process.exit(1);
 }
 
 // Créer une instance d'Express
@@ -65,28 +67,65 @@ app.use(cors({
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../public/views'));
 
+// Middleware global pour ajouter l'utilisateur aux templates EJS
+app.use((req, res, next) => {
+    res.locals.user = req.session.user || null;
+    next();
+});
+
 // Servir les fichiers statiques
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(express.static(path.join(__dirname, '../public/views')));
 app.use(express.static(path.join(__dirname, '../public/views/games')));
+
 const gamesDirectory = path.join(__dirname, '../public/views/games');
 
-// Middleware pour créer des routes dynamiques pour les jeux
-// Route pour une page de jeu
+// Route pour les jeux
 app.get('/games/:gameName', (req, res) => {
     const gameName = req.params.gameName;
-    const gamePath = path.join(__dirname, '../public/views/games', gameName, 'index.ejs');
 
-    // Vérifier si le fichier de jeu existe
+    // Cas particulier pour Poker : rediriger vers le lobby
+    if (gameName === 'Poker') {
+        if (!req.session.user) {
+            return res.redirect('/login');
+        }
+        return res.render('games/Poker/index', {
+            user: req.session.user,
+            isGamePage: true, // C'est le lobby
+        });
+    }
+
+    const gamePath = path.join(gamesDirectory, gameName, 'index.ejs');
     if (fs.existsSync(gamePath)) {
         res.render(`games/${gameName}/index`, {
             user: req.session.user,
-            isGamePage: true // Indiquer qu'il s'agit d'une page de jeu
+            isGamePage: true,
         });
     } else {
         res.status(404).send('Jeu non trouvé');
     }
 });
+
+// Route pour le jeu principal de Poker
+app.get('/games/Poker/main', (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+    const game = {
+        players: [
+            { id: 1, name: 'Player 1', balance: 100 },
+            { id: 2, name: 'Opponent 1', balance: 100 },
+            { id: 3, name: 'Opponent 2', balance: 100 }
+        ]
+    };
+    res.render('games/Poker/main', {
+        user: req.session.user,
+        game,
+        isGamePage: true,
+    });
+});
+
+// Route pour obtenir la liste des jeux
 app.get('/api/games', (req, res) => {
     fs.readdir(gamesDirectory, (err, folders) => {
         if (err) {
@@ -99,7 +138,6 @@ app.get('/api/games', (req, res) => {
         folders.forEach((folder) => {
             const folderPath = path.join(gamesDirectory, folder);
             if (fs.lstatSync(folderPath).isDirectory()) {
-                // Vérifiez la présence des fichiers requis (index.ejs, img.png, style.css)
                 const indexFile = path.join(folderPath, 'index.ejs');
                 const imgFile = path.join(folderPath, 'img.png');
                 const cssFile = path.join(folderPath, 'style.css');
@@ -117,7 +155,6 @@ app.get('/api/games', (req, res) => {
     });
 });
 
-
 // Importer les routes
 const userRoutes = require('./routes/userRoutes');
 const friendRoutes = require('./routes/friendRoutes');
@@ -131,9 +168,31 @@ app.use('/api/games', gameRoutes);
 // Routes pour les pages principales
 app.get('/', (req, res) => {
     const user = req.session.user || null;
-    res.render('index', { user, isGamePage: false });
+
+    if (user) {
+        db.get('SELECT tokens FROM users WHERE id = ?', [user.id], (err, row) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).send('Erreur interne du serveur');
+            }
+            const tokens = row ? row.tokens : 0;
+            res.render('index', { user, isGamePage: false, tokens });
+        });
+    } else {
+        res.render('index', { user, isGamePage: false });
+    }
 });
 
+// Route pour la salle d'attente
+app.get('/lobby', (req, res) => {
+    const user = req.session.user || null;
+
+    if (!user) {
+        return res.redirect('/login');
+    }
+
+    res.render('games/lobby', { user });
+});
 
 app.get('/login', (req, res) => {
     if (req.session.user) {
@@ -147,10 +206,6 @@ app.get('/register', (req, res) => {
         return res.redirect('/');
     }
     res.render('register');
-});
-app.use((req, res, next) => {
-    res.locals.user = req.session.user || null;
-    next();
 });
 
 // Route pour déconnexion
@@ -175,6 +230,30 @@ app.use((err, req, res, next) => {
 // Créer le serveur HTTPS
 const server = https.createServer(sslOptions, app);
 
+// Initialiser Socket.io
+const io = new Server(server);
+
+// Gérer les connexions de Socket.io
+// Gérer les connexions de Socket.io
+io.on('connection', (socket) => {
+    console.log('Un utilisateur s\'est connecté à la salle d\'attente.');
+
+    // Ecouter lorsqu'un utilisateur rejoint la salle d'attente
+    socket.on('joinLobby', (user) => {
+        console.log(`${user.username} a rejoint la salle d'attente.`);
+        // Envoyer un événement à tous les clients pour notifier que le joueur a rejoint
+        io.emit('playerJoined', { username: user.username });
+
+        // Si nous avons assez de joueurs pour commencer (ex: 2 joueurs), démarrer le jeu
+        if (io.engine.clientsCount >= 2) { // Exemple pour 2 joueurs
+            io.emit('startGame');
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Un utilisateur s\'est déconnecté de la salle d\'attente.');
+    });
+});
 // Démarrer le serveur
 server.listen(4000, () => {
     console.log("Serveur HTTPS en cours d'exécution sur https://localhost:4000");

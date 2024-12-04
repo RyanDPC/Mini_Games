@@ -1,0 +1,172 @@
+/* General styling */
+body {
+    background-color: #2b2b2b;
+    color: #ffffff;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Game Container */
+.game-container {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Poker Table */
+.poker-table {
+    background-color: #006600;
+    border-radius: 50%;
+    width: 800px;
+    height: 400px;
+    position: relative;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.7);
+}
+
+/* Player areas */
+.player-area,
+.dealer-area,
+.opponent-area {
+    position: absolute;
+    background-color: transparent;
+    color: #fff;
+    text-align: center;
+}
+
+/* Player positions */
+#player-1 {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+#player-2 {
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+#player-3 {
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+#player-4 {
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Dealer position */
+.dealer-area {
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Community cards area */
+.community-cards-area {
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+/* Card styling */
+.card {
+    display: inline-block;
+    width: 50px;
+    height: 75px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    overflow: hidden;
+    margin: 5px;
+    box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+.card img {
+    width: 100%;
+    height: 100%;
+}
+
+/* Buttons area */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.action-buttons button {
+    padding: 10px 15px;
+    border-radius: 8px;
+    background-color: #ffcc00;
+    color: #2b2b2b;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.action-buttons button:hover {
+    background-color: #e6b800;
+}
+
+.action-buttons input[type="number"] {
+    width: 60px;
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: #444;
+    color: #fff;
+}
+
+/* Card animations */
+.card-animation {
+    animation: deal-card 1s ease-in-out;
+}
+
+@keyframes deal-card {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Player status and balance */
+.player-area h3,
+.opponent-area h3 {
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+.player-area p,
+.opponent-area p {
+    margin: 0;
+    font-size: 1em;
+}
+
+/* Opponents */
+.opponent-area {
+    background-color: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Dealer hand */
+.dealer-area {
+    background-color: rgba(255, 255, 255, 0.15);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+/* Community cards */
+.community-cards-area {
+    background-color: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 8px;
+}

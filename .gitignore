@@ -1,1 +1,40 @@
-.vs/
+# Node.js
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Environnement
+.env
+
+# Certificats SSL
+ssl/
+
+# Sessions
+session/
+
+# Système
+.DS_Store
+Thumbs.db
+
+# Cache
+.cache/
+dist/
+
+# Fichiers de déploiement
+*.pem
+*.crt
+*.key
+
+# Coverage
+coverage/
+
+# Vues compilées
+public/views/**/*.ejs~
+
+# Certificats et fichiers de configuration sensibles
+ssl/*
+*.key
+*.cert
