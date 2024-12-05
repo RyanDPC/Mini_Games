@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="databases.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="2409"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><table title="dealer" custom_title="0" dock_id="1" table="4,6:maindealer"/><dock_state state="000000ff00000000fd00000001000000020000024800000215fc0100000001fb000000160064006f0063006b00420072006f00770073006500310100000000000002480000011e00ffffff000002480000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="dealer" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="35"/><column index="2" value="59"/><column index="3" value="36"/><column index="4" value="71"/><column index="5" value="74"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1*">-- ================================
+-- TABLES POUR LES UTILISATEURS
+-- ================================
+
+-- Table des utilisateurs
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password TEXT NOT NULL,
+    profile_pic TEXT DEFAULT '/assets/pdp/default-pic.jpg',
+    tokens INTEGER DEFAULT 100,
+    elo INTEGER DEFAULT 1000,
+    bio TEXT,
+    theme TEXT DEFAULT 'default',
+    is_online BOOLEAN DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ================================
+-- TABLES POUR LES RELATIONS D'AMIS
+-- ================================
+
+-- Table des amis
+CREATE TABLE IF NOT EXISTS friends (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    friend_id INTEGER NOT NULL,
+    status TEXT CHECK(status IN ('pending', 'accepted', 'rejected')) DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    FOREIGN KEY(friend_id) REFERENCES users(id)
+);
+
+-- ================================
+-- TABLES POUR LES LOBBYS
+-- ================================
+
+-- Table des lobbys (sessions multijoueur)
+CREATE TABLE IF NOT EXISTS lobbies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_name TEXT NOT NULL,
+    room_id TEXT UNIQUE NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table des participants aux lobbys
+CREATE TABLE IF NOT EXISTS lobby_participants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    lobby_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    elo INTEGER NOT NULL,
+    joined_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(lobby_id) REFERENCES lobbies(id),
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+-- ================================
+-- TABLES POUR LES SCORES ET LES PARTIES
+-- ================================
+
+-- Table des scores
+CREATE TABLE IF NOT EXISTS scores (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    game_name TEXT NOT NULL,
+    score INTEGER NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+-- Table des parties jouées
+CREATE TABLE IF NOT EXISTS games (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_name TEXT NOT NULL,
+    winner_id INTEGER,
+    loser_id INTEGER,
+    elo_change INTEGER DEFAULT 0,
+    played_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(winner_id) REFERENCES users(id),
+    FOREIGN KEY(loser_id) REFERENCES users(id)
+);
+
+-- ================================
+-- TABLES POUR LES TOURNOIS
+-- ================================
+
+-- Table des tournois
+CREATE TABLE IF NOT EXISTS tournaments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    game_name TEXT NOT NULL,
+    start_date DATETIME NOT NULL,
+    end_date DATETIME NOT NULL
+);
+
+-- Table des participants aux tournois
+CREATE TABLE IF NOT EXISTS tournament_participants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tournament_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    FOREIGN KEY(tournament_id) REFERENCES tournaments(id),
+    FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+-- Table des matchs de tournois
+CREATE TABLE IF NOT EXISTS tournament_matches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tournament_id INTEGER NOT NULL,
+    player1_id INTEGER NOT NULL,
+    player2_id INTEGER NOT NULL,
+    winner_id INTEGER,
+    FOREIGN KEY(tournament_id) REFERENCES tournaments(id),
+    FOREIGN KEY(player1_id) REFERENCES users(id),
+    FOREIGN KEY(player2_id) REFERENCES users(id),
+    FOREIGN KEY(winner_id) REFERENCES users(id)
+);
+
+-- ================================
+-- TABLES POUR LES QUÊTES
+-- ================================
+
+-- Table des quêtes
+CREATE TABLE IF NOT EXISTS quests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    description TEXT NOT NULL,
+    reward_tokens INTEGER NOT NULL,
+    is_daily BOOLEAN DEFAULT 0,
+    is_weekly BOOLEAN DEFAULT 0
+);
+
+-- Table des quêtes attribuées aux utilisateurs
+CREATE TABLE IF NOT EXISTS user_quests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    quest_id INTEGER NOT NULL,
+    completed BOOLEAN DEFAULT 0,
+    completed_at DATETIME,
+    FOREIGN KEY(user_id) REFERENCES users(id),
+    FOREIGN KEY(quest_id) REFERENCES quests(id)
+);
+
+-- ================================
+-- TABLES POUR LE CHAT ET LA MESSAGERIE
+-- ================================
+
+-- Table des messages
+CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL,
+    receiver_id INTEGER,
+    room_id TEXT,
+    content TEXT NOT NULL,
+    sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(sender_id) REFERENCES users(id),
+    FOREIGN KEY(receiver_id) REFERENCES users(id)
+);
+
+-- ================================
+-- VUES POUR LES CLASSEMENTS
+-- ================================
+
+-- Classement des meilleurs scores par jeu
+CREATE VIEW IF NOT EXISTS game_highscores AS
+SELECT 
+    game_name,
+    user_id,
+    username,
+    MAX(score) AS highscore
+FROM scores
+INNER JOIN users ON scores.user_id = users.id
+GROUP BY game_name, user_id
+ORDER BY game_name, highscore DESC;
+
+-- Classement global des utilisateurs
+CREATE VIEW IF NOT EXISTS global_leaderboard AS
+SELECT
+    users.id AS user_id,
+    users.username,
+    AVG(scores.score) AS average_score,
+    COUNT(scores.id) AS total_games
+FROM scores
+INNER JOIN users ON scores.user_id = users.id
+GROUP BY users.id
+ORDER BY average_score DESC, total_games DESC;
+
+-- Statistiques utilisateur (victoires/défaites)
+CREATE VIEW IF NOT EXISTS user_statistics AS
+SELECT
+    user_id,
+    COUNT(CASE WHEN winner_id = user_id THEN 1 END) AS wins,
+    COUNT(CASE WHEN loser_id = user_id THEN 1 END) AS losses,
+    AVG(elo_change) AS avg_elo_change
+FROM games
+GROUP BY user_id;
+</sql><current_tab id="0"/></tab_sql></sqlb_project>
