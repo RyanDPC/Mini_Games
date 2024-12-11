@@ -97,7 +97,7 @@ function update(currentTime) {
   let head = snake[0];
 
   // Vérifie si le serpent mange la nourriture
-  if (checkFoodCollision(snake[0], food)) {
+  if (checkFoodCollision(head, food)) {
     score++; // Incrémente le score
     if(gameSpeed >= 50)
     gameSpeed -= 10;
